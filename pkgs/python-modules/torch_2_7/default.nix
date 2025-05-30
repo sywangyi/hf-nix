@@ -47,7 +47,7 @@
   removeReferencesTo,
 
   # Build inputs
-  darwin,
+  apple-sdk_15,
   numactl,
 
   # dependencies
@@ -506,6 +506,9 @@ buildPythonPackage rec {
     }
     // lib.optionalAttrs rocmSupport {
       AOTRITON_INSTALLED_PREFIX = rocmPackages.aotriton_0_9;
+    }
+    // lib.optionalAttrs stdenv.hostPlatform.isDarwin {
+      USE_MPS = 1;
     };
 
   nativeBuildInputs =
@@ -576,9 +579,7 @@ buildPythonPackage rec {
     ++ lib.optionals (cudaSupport || rocmSupport) [ effectiveMagma ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [ numactl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
-      darwin.apple_sdk.frameworks.Accelerate
-      darwin.apple_sdk.frameworks.CoreServices
-      darwin.libobjc
+      apple-sdk_15
     ]
     ++ lib.optionals tritonSupport [ _tritonEffective ]
     ++ lib.optionals MPISupport [ mpi ];
