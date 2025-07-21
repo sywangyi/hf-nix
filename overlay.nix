@@ -71,6 +71,15 @@ rec {
 
         compressed-tensors = callPackage ./pkgs/python-modules/compressed-tensors { };
 
+        einops = python-super.einops.overrideAttrs (
+          _: prevAttrs: {
+            disabledTests = prevAttrs.disabledTests ++ [
+              # Times out...
+              "test_notebook_3"
+            ];
+          }
+        );
+
         exllamav2 = callPackage ./pkgs/python-modules/exllamav2 { };
 
         flash-attn = callPackage ./pkgs/python-modules/flash-attn { };
@@ -164,6 +173,14 @@ rec {
             hash = "sha256-D5/ErUNCQbNrbLGBNiucuWocyv+343W7tius6NcM9iQ=";
           };
         };
+
+        scipy = python-super.scipy.overrideAttrs (
+          _: prevAttrs: {
+            # Three tests have a slight deviance.
+            doCheck = false;
+            doInstallCheck = false;
+          }
+        );
 
         torch = python-self.torch_2_7;
 

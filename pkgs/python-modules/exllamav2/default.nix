@@ -9,12 +9,18 @@
   ninja,
   packaging,
   psutil,
+  setuptools,
   which,
   cudaPackages,
+  fastparquet,
+  pandas,
   torch,
   safetensors,
+  sentencepiece,
   tokenizers,
+  regex,
   rich,
+  websockets,
 }:
 
 buildPythonPackage rec {
@@ -29,6 +35,10 @@ buildPythonPackage rec {
   };
 
   stdenv = cudaPackages.backendStdenv;
+
+  pyproject = true;
+
+  build-system = [ setuptools ];
 
   buildInputs = with cudaPackages; [
     cuda_cccl
@@ -47,10 +57,15 @@ buildPythonPackage rec {
   ];
 
   dependencies = [
-    torch
+    fastparquet
+    pandas
     safetensors
+    sentencepiece
     tokenizers
+    torch
+    regex
     rich
+    websockets
   ];
 
   env = {

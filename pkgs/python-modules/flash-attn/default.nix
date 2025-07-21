@@ -9,8 +9,10 @@
   ninja,
   packaging,
   psutil,
+  setuptools,
   which,
   cudaPackages,
+  einops,
   torch,
 }:
 
@@ -28,6 +30,10 @@ buildPythonPackage rec {
 
   stdenv = cudaPackages.backendStdenv;
 
+  pyproject = true;
+
+  build-system = [ setuptools ];
+
   buildInputs = with cudaPackages; [
     cuda_cccl
     cuda_cudart
@@ -35,6 +41,11 @@ buildPythonPackage rec {
     libcusolver
     libcusparse
     psutil
+  ];
+
+  dependencies = [
+    einops
+    torch
   ];
 
   nativeBuildInputs = [
@@ -50,8 +61,6 @@ buildPythonPackage rec {
     CUDA_HOME = "${lib.getDev cudaPackages.cuda_nvcc}";
     FLASH_ATTENTION_FORCE_BUILD = "TRUE";
   };
-
-  propagatedBuildInputs = [ torch ];
 
   # cmake/ninja are used for parallel builds, but we don't want the
   # cmake configure hook to kick in.

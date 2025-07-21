@@ -64,6 +64,7 @@
   psutil,
   pyyaml,
   requests,
+  setuptools,
   sympy,
   types-dataclasses,
   typing-extensions,
@@ -102,7 +103,6 @@
   # dependencies for torch.utils.tensorboard
   pillow,
   six,
-  future,
   tensorboard,
   protobuf,
 
@@ -119,7 +119,8 @@ let
     strings
     trivial
     ;
-  inherit (cudaPackages) cudaFlags cudnn nccl;
+  inherit (cudaPackages) cudnn nccl;
+  cudaFlags = cudaPackages.flags;
 
   triton = throw "python3Packages.torch: use _tritonEffective instead of triton to avoid divergence";
 
@@ -130,6 +131,7 @@ let
       # https://github.com/pytorch/pytorch/blob/release/2.8/.ci/manywheel/build_cuda.sh
       capsPerCudaVersion = {
         "12.9" = [
+          "7.0"
           "7.5"
           "8.0"
           "8.6"
@@ -138,6 +140,7 @@ let
           "12.0"
         ];
         "12.8" = [
+          "7.0"
           "7.5"
           "8.0"
           "8.6"
@@ -155,7 +158,7 @@ let
           "9.0"
         ];
       };
-      real = capsPerCudaVersion."${lib.versions.majorMinor cudaPackages.cudaVersion}";
+      real = capsPerCudaVersion."${lib.versions.majorMinor cudaPackages.cudaMajorMinorVersion}";
       ptx = lists.map (x: "${x}+PTX") real;
     in
     real ++ ptx;
@@ -258,7 +261,8 @@ let
     # effectiveMagma.cudaPackages, making torch too strict in cudaPackages.
     # In particular, this triggered warnings from cuda's `aliases.nix`
     "Magma cudaPackages does not match cudaPackages" =
-      cudaSupport && (effectiveMagma.cudaPackages.cudaVersion != cudaPackages.cudaVersion);
+      cudaSupport
+      && (effectiveMagma.cudaPackages.cudaMajorMinorVersion != cudaPackages.cudaMajorMinorVersion);
     #"Rocm support is currently broken because `rocmPackages.hipblaslt` is unpackaged. (2024-06-09)" =
     #  rocmSupport;
   };
@@ -283,9 +287,9 @@ buildPythonPackage rec {
     owner = "pytorch";
     repo = "pytorch";
     #tag = "v${version}";
-    tag = "v${version}-rc5";
+    tag = "v${version}-rc6";
     fetchSubmodules = true;
-    hash = "sha256-W7xCFXbt9M981dAz9i6EiotnTfA4YQhSozoA2J2ATWE=";
+    hash = "sha256-/z6L3B3EtjGD6xlVqRtpLOZaH8NCg9KqcJSfUc7HoOM=";
   };
 
   patches =
@@ -311,6 +315,10 @@ buildPythonPackage rec {
       pyiGenPath = "${typing-extensions}/${python.sitePackages}:${pyyaml}/${python.sitePackages}";
     in
     ''
+      substituteInPlace pyproject.toml \
+        --replace-fail "setuptools>=62.3.0,<80.0" \
+                       "setuptools>=62.3.0"
+
       substituteInPlace cmake/public/cuda.cmake \
         --replace-fail \
           'message(FATAL_ERROR "Found two conflicting CUDA' \
@@ -419,12 +427,12 @@ buildPythonPackage rec {
   cmakeFlags =
     [
       # (lib.cmakeBool "CMAKE_FIND_DEBUG_MODE" true)
-      (lib.cmakeFeature "CUDAToolkit_VERSION" cudaPackages.cudaVersion)
+      (lib.cmakeFeature "CUDAToolkit_VERSION" cudaPackages.cudaMajorMinorVersion)
     ]
     ++ lib.optionals cudaSupport [
       # Unbreaks version discovery in enable_language(CUDA) when wrapping nvcc with ccache
       # Cf. https://gitlab.kitware.com/cmake/cmake/-/issues/26363
-      (lib.cmakeFeature "CMAKE_CUDA_COMPILER_TOOLKIT_VERSION" cudaPackages.cudaVersion)
+      (lib.cmakeFeature "CMAKE_CUDA_COMPILER_TOOLKIT_VERSION" cudaPackages.cudaMajorMinorVersion)
     ];
 
   preBuild = ''
@@ -535,10 +543,10 @@ buildPythonPackage rec {
         # Some platforms do not support NCCL (i.e., Jetson)
         nccl # Provides nccl.h AND a static copy of NCCL!
       ]
-      ++ lists.optionals (strings.versionOlder cudaVersion "11.8") [
+      ++ lists.optionals (strings.versionOlder cudaMajorMinorVersion "11.8") [
         cuda_nvprof # <cuda_profiler_api.h>
       ]
-      ++ lists.optionals (strings.versionAtLeast cudaVersion "11.8") [
+      ++ lists.optionals (strings.versionAtLeast cudaMajorMinorVersion "11.8") [
         cuda_profiler_api # <cuda_profiler_api.h>
       ]
     )
@@ -565,33 +573,35 @@ buildPythonPackage rec {
   pythonRelaxDeps = [
     "sympy"
   ];
-  dependencies = [
-    astunparse
-    expecttest
-    filelock
-    fsspec
-    hypothesis
-    jinja2
-    networkx
-    ninja
-    packaging
-    psutil
-    pyyaml
-    requests
-    sympy
-    types-dataclasses
-    typing-extensions
+  dependencies =
+    [
+      astunparse
+      expecttest
+      filelock
+      fsspec
+      hypothesis
+      jinja2
+      networkx
+      ninja
+      packaging
+      psutil
+      pyyaml
+      requests
+      sympy
+      types-dataclasses
+      typing-extensions
 
-    # the following are required for tensorboard support
-    pillow
-    six
-    future
-    tensorboard
-    protobuf
+      # the following are required for tensorboard support
+      pillow
+      six
+      tensorboard
+      protobuf
 
-    # torch/csrc requires `pybind11` at runtime
-    pybind11
-  ] ++ lib.optionals tritonSupport [ _tritonEffective ];
+      # torch/csrc requires `pybind11` at runtime
+      pybind11
+    ]
+    ++ lib.optionals (lib.versionAtLeast python.version "3.12") [ setuptools ]
+    ++ lib.optionals tritonSupport [ _tritonEffective ];
 
   propagatedCxxBuildInputs =
     [ ] ++ lib.optionals MPISupport [ mpi ] ++ lib.optionals rocmSupport [ rocmtoolkit_joined ];

@@ -9,8 +9,10 @@
   ninja,
   packaging,
   psutil,
+  setuptools,
   which,
   cudaPackages,
+  einops,
   torch,
 }:
 
@@ -28,6 +30,10 @@ buildPythonPackage rec {
 
   stdenv = cudaPackages.backendStdenv;
 
+  pyproject = true;
+
+  build-system = [ setuptools ];
+
   buildInputs = with cudaPackages; [
     cuda_cccl
     cuda_cudart
@@ -35,6 +41,10 @@ buildPythonPackage rec {
     libcusolver
     libcusparse
     psutil
+  ];
+
+  dependencies = [
+    einops
   ];
 
   nativeBuildInputs = [
