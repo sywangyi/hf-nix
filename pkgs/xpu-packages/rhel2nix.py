@@ -139,14 +139,14 @@ def get_all_packages() -> Dict[str, Package]:
     """Get all packages from the repository"""
     repo_url = BASEURL
     metadata = fetch_and_parse_repodata(repo_url)
-    
+
     all_packages = {}
     for package_elem in metadata.findall(
         './/common:package[@type="rpm"]', RPM_NAMESPACES
     ):
         pkg = Package(package_elem, repo_url)
         all_packages[pkg.name] = pkg
-    
+
     return all_packages
 
 
@@ -156,73 +156,81 @@ def find_target_package(all_packages: Dict[str, Package], version: str) -> Packa
 
     # Look for version-specific package names
     for name, pkg in all_packages.items():
-        if (name.startswith(target_name) and 
-            (version in pkg.version)):
+        if name.startswith(target_name) and (version in pkg.version):
             return pkg
-    
+
     # If not found, raise an exception
     raise Exception(f"Could not find {target_name} package with version {version}")
 
 
 def resolve_dependencies_recursively(
-    target_package: Package, 
-    all_packages: Dict[str, Package], 
-    resolved_packages: Dict[str, Package] = None
+    target_package: Package,
+    all_packages: Dict[str, Package],
+    resolved_packages: Dict[str, Package] = None,
 ) -> Dict[str, Package]:
     """Recursively resolve all dependencies starting from target package"""
-    
+
     if resolved_packages is None:
         resolved_packages = {}
-    
+
     # Add the target package if not already added
     if target_package.name not in resolved_packages:
         resolved_packages[target_package.name] = target_package
         print(f"Added package: {target_package.name}", file=sys.stderr)
-    
+
     # Get dependencies of the current package
     deps = target_package.depends()
-    
+
     for dep_name in deps:
         # Skip if dependency is already resolved
         if dep_name in resolved_packages:
             continue
-            
+
         # Find the dependency package in all_packages
         if dep_name in all_packages:
             dep_package = all_packages[dep_name]
-            print(f"Resolving dependency: {dep_name} for {target_package.name}", file=sys.stderr)
-            
+            print(
+                f"Resolving dependency: {dep_name} for {target_package.name}",
+                file=sys.stderr,
+            )
+
             # Recursively resolve this dependency
             resolve_dependencies_recursively(dep_package, all_packages, resolved_packages)
         else:
-            print(f"Warning: Dependency {dep_name} not found in repository", file=sys.stderr)
-    
+            print(
+                f"Warning: Dependency {dep_name} not found in repository",
+                file=sys.stderr,
+            )
+
     return resolved_packages
 
 
-def __main__():
+def main():
     args = parser.parse_args()
-    
+
     print(f"Fetching all packages from oneAPI repository...", file=sys.stderr)
-    
+
     # Step 1: Get all packages from repository
     all_packages = get_all_packages()
     print(f"Found {len(all_packages)} total packages in repository", file=sys.stderr)
-    
+
     # Step 2: Find intel-deep-learning-essentials package with specified version
     try:
         target_package = find_target_package(all_packages, args.version)
-        print(f"Found target package: {target_package.name} {target_package.version}", file=sys.stderr)
+        print(
+            f"Found target package: {target_package.name} {target_package.version}",
+            file=sys.stderr,
+        )
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
-    
+
     # Step 3: Recursively resolve all dependencies
     print(f"Resolving dependencies recursively...", file=sys.stderr)
     required_packages = resolve_dependencies_recursively(target_package, all_packages)
-    
+
     print(f"Total required packages: {len(required_packages)}", file=sys.stderr)
-    
+
     # Step 4: Filter dupes like hip-devel vs. hip-devel6.4.1
     filtered_packages = {}
     for name, info in required_packages.items():
@@ -232,7 +240,7 @@ def __main__():
                 filtered_packages[name_without_version] = info
         else:
             filtered_packages[name] = info
-    
+
     packages = filtered_packages
     print(f"After filtering duplicates: {len(packages)} packages", file=sys.stderr)
 
@@ -255,18 +263,13 @@ def __main__():
     for name in sorted(packages.keys()):
         info = packages[name]
         deps = {
-            dev_to_merge.get(dep, dep)
-            for dep in info.depends()
-            if dep in packages
+            dev_to_merge.get(dep, dep) for dep in info.depends() if dep in packages
         }
 
         pkg_metadata = {
             "name": name,
             "sha256": info.sha256,
-            "url": urljoin(
-                BASEURL,
-                info.url,
-            ),
+            "url": urljoin(BASEURL, info.url),
             "version": info.version,
         }
 
@@ -299,4 +302,4 @@ def __main__():
 
 
 if __name__ == "__main__":
-    __main__()
+    main()
