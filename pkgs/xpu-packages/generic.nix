@@ -93,6 +93,7 @@ stdenv.mkDerivation rec {
     "libtbbmalloc.so.2"
     "libtbb.so.12"
     "libsycl.so.8" # Intel SYCL runtime library
+    "libmkl_sycl_blas.so.5"
     "libhwloc.so.15" # Hardware Locality library
 
     # Intel math and compiler libraries
@@ -104,6 +105,18 @@ stdenv.mkDerivation rec {
     "libffi.so" # Foreign Function Interface library
     "libumf.so.0" # Unified Memory Framework
     "libxptifw.so" # Intel XPU Profiling and Tracing Interface
+
+    # MKL libraries (provided by other MKL packages or cross-dependencies)
+    "libmkl_core.so.2" # MKL Core library
+    "libmkl_intel_lp64.so.2" # MKL Intel LP64 interface
+    "libmkl_intel_thread.so.2" # MKL Intel threading layer
+    "libmkl_sequential.so.2" # MKL sequential layer
+
+    # MPI libraries (not part of oneAPI, used by benchmarks only)
+    "libmpi.so.12" # Message Passing Interface library
+    "libmpicxx.so.12" # MPI C++ bindings
+    "libmpifort.so.12" # MPI Fortran bindings
+    "libiomp5.so" # OMP library
 
     # System libraries that might not be available
     "libpython3.6m.so.1.0"

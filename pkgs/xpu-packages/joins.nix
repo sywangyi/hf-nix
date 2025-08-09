@@ -5,57 +5,77 @@ final: prev: {
   oneapi-torch-dev = final.callPackage (
     {
       lib,
-      symlinkJoin,
-      makeWrapper,
-      writeShellScriptBin,
+      stdenv,
       gcc,
       cmake,
       pkg-config,
     }:
     let
-      # Create a setup script
-      setupScript = writeShellScriptBin "setup-oneapi-torch-env.sh" ''
-        #!/bin/bash
-        echo "Intel oneAPI PyTorch Development Environment"
-        echo "Note: Using available packages from nixpkgs"
-        
-        # Set basic environment variables
-        export ONEAPI_TORCH_DEV_ROOT="$out"
-        echo "Environment activated!"
-      '';
-
       # Build only the most essential Intel packages for PyTorch
       essentialIntelPackages = lib.filter (pkg: pkg != null) [
-        # Just the core MKL for math operations - most important for PyTorch
-        (
-          if (lib.hasAttr "intel-oneapi-mkl-core-2025.2" final) then
-            final."intel-oneapi-mkl-core-2025.2"
-          else
-            null
-        )
-        # Common licensing - required
-        (
-          if (lib.hasAttr "intel-oneapi-common-licensing" final) then
-            final.intel-oneapi-common-licensing
-          else
-            null
-        )
-        # Intel DPC++ compiler and runtime for SYCL/OneAPI development
-        (
-          if (lib.hasAttr "intel-oneapi-compiler-dpcpp-cpp-2025.2" final) then
-            final."intel-oneapi-compiler-dpcpp-cpp-2025.2"
-          else
-            null
-        )
+        # Core DPC++ compiler package and its dependencies
         (
           if (lib.hasAttr "intel-oneapi-dpcpp-cpp-2025.2" final) then
             final."intel-oneapi-dpcpp-cpp-2025.2"
           else
             null
         )
+        # Compiler runtime and shared components
         (
-          if (lib.hasAttr "intel-oneapi-compiler-dpcpp-cpp-common-2025.2" final) then
-            final."intel-oneapi-compiler-dpcpp-cpp-common-2025.2"
+          if (lib.hasAttr "intel-oneapi-compiler-dpcpp-cpp-runtime-2025.2" final) then
+            final."intel-oneapi-compiler-dpcpp-cpp-runtime-2025.2"
+          else
+            null
+        )
+        (
+          if (lib.hasAttr "intel-oneapi-compiler-shared-2025.2" final) then
+            final."intel-oneapi-compiler-shared-2025.2"
+          else
+            null
+        )
+        # MKL for math operations - most important for PyTorch
+        (
+          if (lib.hasAttr "intel-oneapi-mkl-core-2025.2" final) then
+            final."intel-oneapi-mkl-core-2025.2"
+          else
+            null
+        )
+        (
+          if (lib.hasAttr "intel-oneapi-mkl-devel-2025.2" final) then
+            final."intel-oneapi-mkl-devel-2025.2"
+          else
+            null
+        )
+        # Common infrastructure packages
+        (
+          if (lib.hasAttr "intel-oneapi-common-licensing-2025.2" final) then
+            final."intel-oneapi-common-licensing-2025.2"
+          else
+            null
+        )
+        (
+          if (lib.hasAttr "intel-oneapi-common-vars" final) then
+            final.intel-oneapi-common-vars
+          else
+            null
+        )
+        # TBB for threading
+        (
+          if (lib.hasAttr "intel-oneapi-tbb-2022.2" final) then
+            final."intel-oneapi-tbb-2022.2"
+          else
+            null
+        )
+        (
+          if (lib.hasAttr "intel-oneapi-tbb-devel-2022.2" final) then
+            final."intel-oneapi-tbb-devel-2022.2"
+          else
+            null
+        )
+        # OpenMP
+        (
+          if (lib.hasAttr "intel-oneapi-openmp-2025.2" final) then
+            final."intel-oneapi-openmp-2025.2"
           else
             null
         )
@@ -66,26 +86,40 @@ final: prev: {
         gcc
         cmake
         pkg-config
-        setupScript
       ];
 
       # Combine essential Intel packages with standard tools
-      availablePackages = essentialIntelPackages ++ standardPackages;
+      allPackages = essentialIntelPackages ++ standardPackages;
     in
-    symlinkJoin {
+    stdenv.mkDerivation {
       name = "oneapi-torch-dev-2025.2.0";
-      paths = availablePackages;
 
-      nativeBuildInputs = [ makeWrapper ];
+      buildCommand = ''
+        mkdir -p $out/bin
 
-      # Keep postBuild empty for now
-      postBuild = "";
+        # Copy all contents from each package, handling conflicts
+        ${lib.concatMapStringsSep "\n" (pkg: ''
+          if [ -d "${pkg}" ]; then
+            cp -rf "${pkg}/"* "$out/" 2>/dev/null || true
+            cp -rf "${pkg}/".* "$out/" 2>/dev/null || true
+          fi
+        '') allPackages}
+
+        # Create convenience symlinks for Intel compilers in bin
+        if [ -d "$out/oneapi/compiler/2025.2/bin" ]; then
+          for tool in icx icpx dpcpp dpcpp-cl opencl-aot; do
+            if [ -f "$out/oneapi/compiler/2025.2/bin/$tool" ]; then
+              ln -sf "../oneapi/compiler/2025.2/bin/$tool" "$out/bin/$tool"
+            fi
+          done
+        fi
+      '';
 
       meta = with lib; {
-        description = "Intel oneAPI development environment for PyTorch (using available packages)";
+        description = "Intel oneAPI development environment for PyTorch (copied files)";
         longDescription = ''
           A development package for PyTorch compilation with Intel optimizations.
-          Uses available Intel oneAPI packages from nixpkgs or falls back to standard tools.
+          Uses copied files instead of symlinks to avoid path issues.
         '';
         license = licenses.free;
         platforms = platforms.linux;
