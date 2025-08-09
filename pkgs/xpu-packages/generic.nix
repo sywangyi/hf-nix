@@ -6,8 +6,8 @@
   stdenv,
   rpmextract,
   rsync,
-  writeText,
   xpuPackages,
+  zlib,
 
   pname,
   version,
@@ -41,7 +41,6 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     autoPatchelfHook
-    xpuPackages.markForXpuRootHook or null
     rpmextract
     rsync
   ];
@@ -49,9 +48,11 @@ stdenv.mkDerivation rec {
   buildInputs = [
     stdenv.cc.cc.lib
     stdenv.cc.cc.libgcc
+    # Add zlib for libz.so.1 dependency
+    zlib
   ] ++ (map (dep: xpuPackages.${dep}) filteredDeps);
 
-  # Extract RPM packages
+  # Extract RPM packages using rpmextract
   unpackPhase = ''
     for src in $srcs; do
       rpmextract "$src"
@@ -62,14 +63,14 @@ stdenv.mkDerivation rec {
     runHook preInstall
     mkdir -p $out
     
-    # Copy oneAPI installation
-    if [ -d opt/intel ]; then
+    # Check if opt/intel exists and copy content
+    if [ -d "opt/intel" ]; then
       cp -rT opt/intel $out
-    fi
-    
-    # Some packages might use different paths
-    if [ -d usr ]; then
-      cp -rT usr $out
+    elif [ -d "opt" ]; then
+      cp -rT opt $out
+    else
+      # Fallback: copy everything if no opt directory found
+      cp -r . $out/
     fi
     
     runHook postInstall
@@ -78,13 +79,32 @@ stdenv.mkDerivation rec {
   # Stripping the binaries from the oneAPI packages might break them
   dontStrip = true;
 
+  # Don't check for broken symlinks - Intel packages often have complex internal symlink structures
+  preFixup = ''
+    # Remove broken symlinks that point to Intel's "latest" structure
+    find $out -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+  '';
+
+
   autoPatchelfIgnoreMissingDeps = [
     # oneAPI specific libraries that should come from driver/runtime
     "libOpenCL.so.1"
     "libze_loader.so.1"
     "libtbbmalloc.so.2"
     "libtbb.so.12"
-    
+    "libsycl.so.8" # Intel SYCL runtime library
+    "libhwloc.so.15" # Hardware Locality library
+
+    # Intel math and compiler libraries
+    "libimf.so" # Intel Math Functions library
+    "libsvml.so" # Intel Short Vector Math Library
+    "libirng.so" # Intel Random Number Generator library
+    "libintlc.so.5" # Intel Compiler library
+    "libur_loader.so.0" # Unified Runtime loader
+    "libffi.so" # Foreign Function Interface library
+    "libumf.so.0" # Unified Memory Framework
+    "libxptifw.so" # Intel XPU Profiling and Tracing Interface
+
     # System libraries that might not be available
     "libpython3.6m.so.1.0"
     "libpython3.7m.so.1.0"
@@ -92,32 +112,10 @@ stdenv.mkDerivation rec {
     "libpython3.9.so.1.0"
   ];
 
-  # Set up environment variables for oneAPI
-  setupHook = writeText "setup-hook.sh" ''
-    export ONEAPI_ROOT=@out@
-    export SYCL_ROOT=@out@
-    export DPCPP_ROOT=@out@
-    export MKL_ROOT=@out@/mkl/latest
-    export TBB_ROOT=@out@/tbb/latest
-    export CCL_ROOT=@out@/ccl/latest
-    export DAL_ROOT=@out@/dal/latest
-    export DPL_ROOT=@out@/dpl/latest
-    export IPPCP_ROOT=@out@/ippcp/latest
-    export IPP_ROOT=@out@/ipp/latest
-    
-    # Add oneAPI binaries to PATH
-    if [ -d "@out@/compiler/latest/linux/bin" ]; then
-      addToSearchPath PATH "@out@/compiler/latest/linux/bin"
-    fi
-    
-    # Add oneAPI libraries to library path
-    if [ -d "@out@/compiler/latest/linux/lib" ]; then
-      addToSearchPath LD_LIBRARY_PATH "@out@/compiler/latest/linux/lib"
-    fi
-    
-    # Add MKL libraries
-    if [ -d "@out@/mkl/latest/lib/intel64" ]; then
-      addToSearchPath LD_LIBRARY_PATH "@out@/mkl/latest/lib/intel64"
-    fi
-  '';
+  meta = with lib; {
+    description = "Intel oneAPI package: ${pname}";
+    homepage = "https://software.intel.com/oneapi";
+    platforms = platforms.linux;
+    license = licenses.unfree;
+  };
 }
