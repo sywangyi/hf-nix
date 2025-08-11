@@ -154,13 +154,16 @@ def find_target_package(all_packages: Dict[str, Package], version: str) -> Packa
     """Find intel-deep-learning-essentials package with the specified version"""
     target_name = "intel-deep-learning-essentials"
 
-    # Look for version-specific package names
+    version_suffix = ".".join(version.split(".")[:2])  # 2025.2.0 -> 2025.2
+
+    # Fallback: Look for version-specific package names
     for name, pkg in all_packages.items():
-        if name.startswith(target_name) and (version in pkg.version):
+        if name.startswith(target_name) and name.endswith(f"-{version_suffix}") and (version in pkg.version):
+            print(f"Found version match: {name} with version {pkg.version}", file=sys.stderr)
             return pkg
 
     # If not found, raise an exception
-    raise Exception(f"Could not find {target_name} package with version {version}")
+    raise Exception(f"Could not find {target_name} package with version suffix -{version_suffix}")
 
 
 def resolve_dependencies_recursively(
