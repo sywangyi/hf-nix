@@ -8,6 +8,7 @@
   python,
   config,
   cudaSupport ? config.cudaSupport,
+  xpuSupport ? config.xpuSupport,
   cudaPackages,
   autoAddDriverRunpath,
   effectiveMagma ?
@@ -107,6 +108,7 @@
   # ROCm dependencies
   rocmSupport ? config.rocmSupport,
   rocmPackages,
+  xpuPackages,
   gpuTargets ? [ ],
 }:
 
@@ -578,6 +580,7 @@ buildPythonPackage rec {
         rocthrust-devel
       ]
     )
+  ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev ]
     ++ lib.optionals (cudaSupport || rocmSupport) [ effectiveMagma ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [ numactl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
@@ -620,7 +623,7 @@ buildPythonPackage rec {
     ++ lib.optionals tritonSupport [ _tritonEffective ];
 
   propagatedCxxBuildInputs =
-    [ ] ++ lib.optionals MPISupport [ mpi ] ++ lib.optionals rocmSupport [ rocmtoolkit_joined ];
+    [ ] ++ lib.optionals MPISupport [ mpi ] ++ lib.optionals rocmSupport [ rocmtoolkit_joined ] ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev ];
 
   # Tests take a long time and may be flaky, so just sanity-check imports
   doCheck = false;

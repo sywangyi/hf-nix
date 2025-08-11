@@ -110,7 +110,9 @@
             };
 
             xpu = {
-              xpuPackages = pkgsXpu.xpuPackages;
+              python3Packages = with pkgsXpu.python3.pkgs; {
+                inherit torch;
+              };
             };
 
             rocm = {
