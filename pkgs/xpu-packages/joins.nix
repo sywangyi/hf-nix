@@ -104,17 +104,27 @@ final: prev: {
             cp -rf "${pkg}/".* "$out/" 2>/dev/null || true
           fi
         '') allPackages}
-
-        # Create convenience symlinks for Intel compilers in bin
+        # Create wrapper scripts for Intel compilers instead of direct symlinks
         if [ -d "$out/oneapi/compiler/2025.2/bin" ]; then
           for tool in icx icpx dpcpp dpcpp-cl opencl-aot; do
             if [ -f "$out/oneapi/compiler/2025.2/bin/$tool" ]; then
-              ln -sf "../oneapi/compiler/2025.2/bin/$tool" "$out/bin/$tool"
+              cat > "$out/bin/$tool" << 'WRAPPER_EOF'
+#!/bin/bash
+# Wrapper script for Intel compiler
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ONEAPI_ROOT="$SCRIPT_DIR/../oneapi"
+export PATH="$ONEAPI_ROOT/compiler/2025.2/bin:$PATH"
+export LD_LIBRARY_PATH="$ONEAPI_ROOT/compiler/2025.2/lib:$LD_LIBRARY_PATH"
+export CPATH="$ONEAPI_ROOT/compiler/2025.2/include:$CPATH"
+exec "$ONEAPI_ROOT/compiler/2025.2/bin/TOOL_NAME" "$@"
+WRAPPER_EOF
+              # Replace TOOL_NAME with the actual tool name
+              sed -i "s/TOOL_NAME/$tool/g" "$out/bin/$tool"
+              chmod +x "$out/bin/$tool"
             fi
           done
         fi
       '';
-
       meta = with lib; {
         description = "Intel oneAPI development environment for PyTorch (copied files)";
         longDescription = ''
