@@ -18,6 +18,9 @@ final: prev: {
         # Compiler runtime and shared components
         final."intel-oneapi-compiler-dpcpp-cpp-runtime-2025.2"
         final."intel-oneapi-compiler-shared-2025.2"
+        final."intel-oneapi-compiler-shared-runtime-2025.2"
+        final."intel-oneapi-compiler-shared-common-2025.2"
+        final."intel-oneapi-compiler-dpcpp-cpp-common-2025.2"
         # MKL for math operations - most important for PyTorch
         final."intel-oneapi-mkl-core-2025.2"
         final."intel-oneapi-mkl-devel-2025.2"

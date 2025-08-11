@@ -410,6 +410,9 @@ buildPythonPackage rec {
     + lib.optionalString rocmSupport ''
       export PYTORCH_ROCM_ARCH="${gpuTargetString}"
       python tools/amd_build/build_amd.py
+    ''
+    + lib.optionalString xpuSupport ''
+      export SYCL_ROOT=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2
     '';
 
   # Use pytorch's custom configurations
