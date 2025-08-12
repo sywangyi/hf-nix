@@ -113,6 +113,7 @@
               python3Packages = with pkgsXpu.python3.pkgs; {
                 inherit torch;
               };
+              onednn-xpu = pkgsXpu.xpuPackages.onednn-xpu;
             };
 
             rocm = {

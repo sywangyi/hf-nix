@@ -79,7 +79,7 @@ final: prev: {
 #!/bin/bash
 # Wrapper script for Intel compiler
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ONEAPI_ROOT="$SCRIPT_DIR/../oneapi"
+ONEAPI_ROOT=$(dirname "$(dirname "$(readlink -f "$0")")")/oneapi
 export PATH="$ONEAPI_ROOT/compiler/2025.2/bin:$PATH"
 export LD_LIBRARY_PATH="$ONEAPI_ROOT/compiler/2025.2/lib:$LD_LIBRARY_PATH"
 export CPATH="$ONEAPI_ROOT/compiler/2025.2/include:$CPATH"
@@ -104,4 +104,8 @@ WRAPPER_EOF
       };
     }
   ) { };
+
+  onednn-xpu = final.callPackage ./onednn-xpu.nix { 
+    oneapi-torch-dev = final.oneapi-torch-dev;
+  };
 }
