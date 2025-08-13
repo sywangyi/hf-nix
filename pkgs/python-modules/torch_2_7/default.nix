@@ -382,6 +382,17 @@ buildPythonPackage rec {
     + lib.optionalString cudaSupport ''
       rm cmake/Modules/FindCUDAToolkit.cmake
     ''
+    # replace mkldnn build for xpu
+    + lib.optionalString xpuSupport ''
+      sed -i '/ExternalProject_Add(xpu_mkldnn_proj/,/^ *)/s/^/#/' cmake/Modules/FindMKLDNN.cmake
+      substituteInPlace cmake/Modules/FindMKLDNN.cmake \
+        --replace-fail 'ExternalProject_Get_Property(xpu_mkldnn_proj SOURCE_DIR BINARY_DIR)' '# ExternalProject_Get_Property(xpu_mkldnn_proj SOURCE_DIR BINARY_DIR)' \
+        --replace-fail  "set(XPU_MKLDNN_LIBRARIES \''${BINARY_DIR}/src/\''${DNNL_LIB_NAME})" "set(XPU_MKLDNN_LIBRARIES ${xpuPackages.onednn-xpu}/lib/libdnnl.a)" \
+        --replace-fail  "set(XPU_MKLDNN_INCLUDE \''${SOURCE_DIR}/include \''${BINARY_DIR}/include)" "set(XPU_MKLDNN_INCLUDE ${xpuPackages.onednn-xpu}/include)"
+      echo "\n==== FindMKLDNN.cmake after substituteInPlace ===="
+      cat cmake/Modules/FindMKLDNN.cmake
+      echo "==== End FindMKLDNN.cmake ===="
+    ''
     # error: no member named 'aligned_alloc' in the global namespace; did you mean simply 'aligned_alloc'
     # This lib overrided aligned_alloc hence the error message. Tltr: his function is linkable but not in header.
     +
@@ -457,6 +468,7 @@ buildPythonPackage rec {
       # Cf. https://gitlab.kitware.com/cmake/cmake/-/issues/26363
       (lib.cmakeFeature "CMAKE_CUDA_COMPILER_TOOLKIT_VERSION" cudaPackages.cudaMajorMinorVersion)
     ];
+
 
   preBuild = ''
     export MAX_JOBS=$NIX_BUILD_CORES
@@ -583,7 +595,7 @@ buildPythonPackage rec {
         rocthrust-devel
       ]
     )
-  ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev ]
+    ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev xpuPackages.onednn-xpu ]
     ++ lib.optionals (cudaSupport || rocmSupport) [ effectiveMagma ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [ numactl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
@@ -626,7 +638,7 @@ buildPythonPackage rec {
     ++ lib.optionals tritonSupport [ _tritonEffective ];
 
   propagatedCxxBuildInputs =
-    [ ] ++ lib.optionals MPISupport [ mpi ] ++ lib.optionals rocmSupport [ rocmtoolkit_joined ] ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev ];
+    [ ] ++ lib.optionals MPISupport [ mpi ] ++ lib.optionals rocmSupport [ rocmtoolkit_joined ] ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev xpuPackages.onednn-xpu];
 
   # Tests take a long time and may be flaky, so just sanity-check imports
   doCheck = false;
