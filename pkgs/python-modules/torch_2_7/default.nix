@@ -424,6 +424,7 @@ buildPythonPackage rec {
     ''
     + lib.optionalString xpuSupport ''
       export SYCL_ROOT=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2
+      export Pti_DIR=${xpuPackages.oneapi-torch-dev}/oneapi/pti/0.12/lib/cmake/pti
     '';
 
   # Use pytorch's custom configurations
