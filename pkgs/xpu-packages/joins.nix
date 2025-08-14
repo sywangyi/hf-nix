@@ -9,6 +9,7 @@ final: prev: {
       gcc,
       cmake,
       pkg-config,
+      rsync,
     }:
     let
       # Build only the most essential Intel packages for PyTorch
@@ -49,48 +50,23 @@ final: prev: {
     in
     stdenv.mkDerivation {
       name = "oneapi-torch-dev-2025.2.0";
+      nativeBuildInputs = [rsync];
 
       buildCommand = ''
-        mkdir -p $out/bin
-
-        # Copy all contents from each package, handling conflicts and permissions
-        ${lib.concatMapStringsSep "\n" (pkg: ''
-          if [ -d "${pkg}" ]; then
-            # Set write permissions on target directories before copying
-            find "$out" -type d -exec chmod u+w {} \; 2>/dev/null || true
-            cp -r "${pkg}/"* "$out/" 2>/dev/null || true
-            cp -r "${pkg}/".* "$out/" 2>/dev/null || true
-          fi
-        '') essentialIntelPackages}
-
-        # Copy standard packages
-        ${lib.concatMapStringsSep "\n" (pkg: ''
-          if [ -d "${pkg}" ]; then
-            find "$out" -type d -exec chmod u+w {} \; 2>/dev/null || true
-            cp -r "${pkg}/"* "$out/" 2>/dev/null || true
-            cp -r "${pkg}/".* "$out/" 2>/dev/null || true
-          fi
-        '') standardPackages}
-        # Create wrapper scripts for Intel compilers instead of direct symlinks
-        if [ -d "$out/oneapi/compiler/2025.2/bin" ]; then
-          for tool in icx icpx dpcpp dpcpp-cl opencl-aot; do
-            if [ -f "$out/oneapi/compiler/2025.2/bin/$tool" ]; then
-              cat > "$out/bin/$tool" << 'WRAPPER_EOF'
-#!/bin/bash
-# Wrapper script for Intel compiler
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ONEAPI_ROOT=$(dirname "$(dirname "$(readlink -f "$0")")")/oneapi
-export PATH="$ONEAPI_ROOT/compiler/2025.2/bin:$PATH"
-export LD_LIBRARY_PATH="$ONEAPI_ROOT/compiler/2025.2/lib:$LD_LIBRARY_PATH"
-export CPATH="$ONEAPI_ROOT/compiler/2025.2/include:$CPATH"
-exec "$ONEAPI_ROOT/compiler/2025.2/bin/TOOL_NAME" "$@"
-WRAPPER_EOF
-              # Replace TOOL_NAME with the actual tool name
-              sed -i "s/TOOL_NAME/$tool/g" "$out/bin/$tool"
-              chmod +x "$out/bin/$tool"
+        # Merge all top-level directories from every package into $out using rsync
+        for pkg in ${lib.concatStringsSep " " (essentialIntelPackages ++ standardPackages)}; do
+          for subdir in $(ls "$pkg"); do
+            if [ -d "$pkg/$subdir" ]; then
+              mkdir -p "$out/$subdir"
+              rsync -a "$pkg/$subdir/" "$out/$subdir/"
             fi
           done
-        fi
+        done
+
+        # Export environment variables for oneAPI tools
+        export PATH="$out/oneapi/compiler/2025.2/bin:$PATH"
+        export LD_LIBRARY_PATH="$out/oneapi/compiler/2025.2/lib:$LD_LIBRARY_PATH"
+        export CPATH="$out/oneapi/compiler/2025.2/include:$CPATH"
       '';
       meta = with lib; {
         description = "Intel oneAPI development environment for PyTorch (copied files)";
@@ -104,6 +80,10 @@ WRAPPER_EOF
       };
     }
   ) { };
+
+  oneapi-bintools-unwrapped = final.callPackage ./bintools-unwrapped.nix {
+    oneapi-torch-dev = final.oneapi-torch-dev;
+  };
 
   onednn-xpu = final.callPackage ./onednn-xpu.nix { 
     oneapi-torch-dev = final.oneapi-torch-dev;

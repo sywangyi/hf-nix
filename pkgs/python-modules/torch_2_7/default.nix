@@ -110,6 +110,7 @@
   rocmPackages,
   xpuPackages,
   gpuTargets ? [ ],
+  gcc,
 }:
 
 let
@@ -337,9 +338,9 @@ buildPythonPackage rec {
     ];
 
   postUnpack = lib.optionalString xpuSupport ''
-    mkdir -p $sourceRoot/third_party
-    cp -r ${torchXpuOpsSrc} $sourceRoot/third_party/torch-xpu-ops
-    patch -d third_party/torch-xpu-ops -p1 < ${./0001-debug.patch}
+    cp -r --no-preserve=mode ${torchXpuOpsSrc} $sourceRoot/third_party/torch-xpu-ops
+    patch -d $sourceRoot/third_party/torch-xpu-ops -p1 < ${./0001-debug.patch}
+    echo ${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version} ${stdenv.cc} ${stdenv.cc.libc} ${gcc.cc.lib}
   '';
 
   postPatch =
@@ -411,7 +412,9 @@ buildPythonPackage rec {
        # --replace-fail 'list(APPEND SYCL_FLAGS "-fsycl")' 'list(APPEND SYCL_FLAGS "-fsycl" "-lpthread" "-lrt")'
       #sed -i '/if(error)/,/endif()/s/^/#/' third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
       #sed -i '/SYCL_CMPLR_TEST_RUN(/,/^  endif()/s/^/#/' third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
-      cat third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
+      #cat third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
+      find . -type f -name 'link.txt' -exec sed -i 's/-lgcc/-lgcc_s/g' {} +
+      find . -type f -name 'flags.make' -exec sed -i 's/-lgcc//g' {} +
 
 
     ''
@@ -447,6 +450,12 @@ buildPythonPackage rec {
     + lib.optionalString xpuSupport ''
       export SYCL_ROOT=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2
       export Pti_DIR=${xpuPackages.oneapi-torch-dev}/oneapi/pti/0.12/lib/cmake/pti
+    export ICPX_CLANG_INCLUDE=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2/lib/clang/21/include
+    export GCC_CXX_INCLUDE=${gcc.cc}/include/c++/${gcc.version}
+    export LIBC_INCLUDE=${stdenv.cc.libc_dev}/include
+    export CXXFLAGS="-B${stdenv.cc.libc}/lib -B${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include -isystem$ICPX_CLANG_INCLUDE -I$LIBC_INCLUDE -I$GCC_CXX_INCLUDE -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu -L${gcc.cc.lib}/lib -lgcc_s $CXXFLAGS"
+    export LDFLAGS="-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc}/lib -L${stdenv.cc.libc}/lib64 -L${stdenv.cc.libc}/usr/lib -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib -L${stdenv.cc}/lib/gcc/x86_64-unknown-linux-gnu/${stdenv.cc.version} -L${stdenv.cc.cc.lib}/lib ${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}/libgcc.a -L${gcc.cc.lib}/lib $LDFLAGS"
+    echo $LDFLAGS
     '';
 
   # Use pytorch's custom configurations
@@ -485,6 +494,10 @@ buildPythonPackage rec {
     [
       # (lib.cmakeBool "CMAKE_FIND_DEBUG_MODE" true)
       (lib.cmakeFeature "CUDAToolkit_VERSION" cudaPackages.cudaMajorMinorVersion)
+    ]
+    ++ lib.optionals xpuSupport [
+      "-DCMAKE_EXE_LINKER_FLAGS=-L${gcc.cc.lib}/lib -lgcc_s"
+      "-DCMAKE_SHARED_LINKER_FLAGS=-L${gcc.cc.lib}/lib -lgcc_s"
     ]
     ++ lib.optionals cudaSupport [
       # Unbreaks version discovery in enable_language(CUDA) when wrapping nvcc with ccache
@@ -576,6 +589,7 @@ buildPythonPackage rec {
       torchXpuOpsSrc
       xpuPackages.oneapi-torch-dev
       xpuPackages.onednn-xpu
+      xpuPackages.oneapi-bintools-unwrapped
     ];
 
   buildInputs =
@@ -623,7 +637,16 @@ buildPythonPackage rec {
         rocthrust-devel
       ]
     )
-    ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev xpuPackages.onednn-xpu torchXpuOpsSrc]
+    ++ lib.optionals xpuSupport
+    [ 
+      xpuPackages.oneapi-torch-dev
+      xpuPackages.oneapi-bintools-unwrapped
+      xpuPackages.onednn-xpu
+      torchXpuOpsSrc
+      gcc.cc.lib
+      gcc.cc
+      stdenv.cc.cc.libgcc
+    ]
     ++ lib.optionals (cudaSupport || rocmSupport) [ effectiveMagma ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [ numactl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
