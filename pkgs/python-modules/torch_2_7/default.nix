@@ -339,6 +339,7 @@ buildPythonPackage rec {
   postUnpack = lib.optionalString xpuSupport ''
     mkdir -p $sourceRoot/third_party
     cp -r ${torchXpuOpsSrc} $sourceRoot/third_party/torch-xpu-ops
+    patch -d third_party/torch-xpu-ops -p1 < ${./0001-debug.patch}
   '';
 
   postPatch =
@@ -394,8 +395,9 @@ buildPythonPackage rec {
     + lib.optionalString cudaSupport ''
       rm cmake/Modules/FindCUDAToolkit.cmake
     ''
-    # replace mkldnn build for xpu
+
     + lib.optionalString xpuSupport ''
+      # replace mkldnn build for xpu
       sed -i '/ExternalProject_Add(xpu_mkldnn_proj/,/^ *)/s/^/#/' cmake/Modules/FindMKLDNN.cmake
       substituteInPlace cmake/Modules/FindMKLDNN.cmake \
         --replace-fail 'ExternalProject_Get_Property(xpu_mkldnn_proj SOURCE_DIR BINARY_DIR)' '# ExternalProject_Get_Property(xpu_mkldnn_proj SOURCE_DIR BINARY_DIR)' \
@@ -404,6 +406,13 @@ buildPythonPackage rec {
       # comment torch-xpu-ops git clone block in pytorch/caffe2/CMakeLists.txt
       sed -i '/set(TORCH_XPU_OPS_REPO_URL/,/^  endif()/s/^/#/' caffe2/CMakeLists.txt
       sed -i '/execute_process(/,/^  endif()/s/^/#/' caffe2/CMakeLists.txt
+      # add lpthread, lrt link for sycl link
+      #substituteInPlace third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake \
+       # --replace-fail 'list(APPEND SYCL_FLAGS "-fsycl")' 'list(APPEND SYCL_FLAGS "-fsycl" "-lpthread" "-lrt")'
+      #sed -i '/if(error)/,/endif()/s/^/#/' third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
+      #sed -i '/SYCL_CMPLR_TEST_RUN(/,/^  endif()/s/^/#/' third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
+      cat third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
+
 
     ''
     # error: no member named 'aligned_alloc' in the global namespace; did you mean simply 'aligned_alloc'
@@ -565,6 +574,8 @@ buildPythonPackage rec {
     ]
     ++ lib.optionals xpuSupport [
       torchXpuOpsSrc
+      xpuPackages.oneapi-torch-dev
+      xpuPackages.onednn-xpu
     ];
 
   buildInputs =
@@ -612,7 +623,7 @@ buildPythonPackage rec {
         rocthrust-devel
       ]
     )
-    ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev xpuPackages.onednn-xpu ]
+    ++ lib.optionals xpuSupport [ xpuPackages.oneapi-torch-dev xpuPackages.onednn-xpu torchXpuOpsSrc]
     ++ lib.optionals (cudaSupport || rocmSupport) [ effectiveMagma ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [ numactl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [

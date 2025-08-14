@@ -1,0 +1,35 @@
+From e6dabb66babba897d3b011b11f7968a2e769228b Mon Sep 17 00:00:00 2001
+From: "Wang, Yi A" <yi.a.wang@intel.com>
+Date: Thu, 14 Aug 2025 12:54:28 +0000
+Subject: [PATCH] debug
+
+Signed-off-by: Wang, Yi A <yi.a.wang@intel.com>
+---
+ cmake/Modules/FindSYCLToolkit.cmake | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/cmake/Modules/FindSYCLToolkit.cmake b/cmake/Modules/FindSYCLToolkit.cmake
+index 88edd34a..1dc61eaf 100644
+--- a/cmake/Modules/FindSYCLToolkit.cmake
++++ b/cmake/Modules/FindSYCLToolkit.cmake
+@@ -106,7 +106,8 @@ function(SYCL_CMPLR_TEST_BUILD error TEST_SRC_FILE TEST_EXE)
+   set(SYCL_CXX_FLAGS_LIST "${SYCL_CXX_FLAGS}")
+   string(REPLACE "-Wno-stringop-overflow" "" SYCL_CXX_FLAGS_LIST "${SYCL_CXX_FLAGS_LIST}")
+   separate_arguments(SYCL_CXX_FLAGS_LIST)
+-
++  message("SYCL_COMPILE:${SYCL_COMPILER}")
++  message("SYCL_CXX_FLAGS:${SYCL_CXX_FLAGS_LIST}")
+   execute_process(
+     COMMAND "${SYCL_COMPILER}"
+     ${SYCL_CXX_FLAGS_LIST}
+@@ -119,6 +120,7 @@ function(SYCL_CMPLR_TEST_BUILD error TEST_SRC_FILE TEST_EXE)
+     RESULT_VARIABLE result
+     TIMEOUT 60
+     )
++  message("result ${result}")
+ 
+   # Verify if test case build properly.
+   if(result)
+-- 
+2.43.5
+
