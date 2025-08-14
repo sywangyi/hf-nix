@@ -285,6 +285,13 @@ let
     #"Rocm support is currently broken because `rocmPackages.hipblaslt` is unpackaged. (2024-06-09)" =
     #  rocmSupport;
   };
+
+  torchXpuOpsSrc = if xpuSupport then fetchFromGitHub {
+    owner = "intel";
+    repo = "torch-xpu-ops";
+    rev = "3ee2bd2f13e1ed17a685986ff667a58bed5f2aa5";
+    hash = "sha256-PzD0twcZexQDDlThnzJm6kp9HeZpxRxozC25UswlLso=";
+  } else null;
 in
 buildPythonPackage rec {
   pname = "torch";
@@ -328,6 +335,11 @@ buildPythonPackage rec {
       # https://github.com/pytorch/pytorch/pull/108847
       ./pytorch-pr-108847.patch
     ];
+
+  postUnpack = lib.optionalString xpuSupport ''
+    mkdir -p $sourceRoot/third_party
+    cp -r ${torchXpuOpsSrc} $sourceRoot/third_party/torch-xpu-ops
+  '';
 
   postPatch =
     ''
@@ -389,9 +401,10 @@ buildPythonPackage rec {
         --replace-fail 'ExternalProject_Get_Property(xpu_mkldnn_proj SOURCE_DIR BINARY_DIR)' '# ExternalProject_Get_Property(xpu_mkldnn_proj SOURCE_DIR BINARY_DIR)' \
         --replace-fail  "set(XPU_MKLDNN_LIBRARIES \''${BINARY_DIR}/src/\''${DNNL_LIB_NAME})" "set(XPU_MKLDNN_LIBRARIES ${xpuPackages.onednn-xpu}/lib/libdnnl.a)" \
         --replace-fail  "set(XPU_MKLDNN_INCLUDE \''${SOURCE_DIR}/include \''${BINARY_DIR}/include)" "set(XPU_MKLDNN_INCLUDE ${xpuPackages.onednn-xpu}/include)"
-      echo "\n==== FindMKLDNN.cmake after substituteInPlace ===="
-      cat cmake/Modules/FindMKLDNN.cmake
-      echo "==== End FindMKLDNN.cmake ===="
+      # comment torch-xpu-ops git clone block in pytorch/caffe2/CMakeLists.txt
+      sed -i '/set(TORCH_XPU_OPS_REPO_URL/,/^  endif()/s/^/#/' caffe2/CMakeLists.txt
+      sed -i '/execute_process(/,/^  endif()/s/^/#/' caffe2/CMakeLists.txt
+
     ''
     # error: no member named 'aligned_alloc' in the global namespace; did you mean simply 'aligned_alloc'
     # This lib overrided aligned_alloc hence the error message. Tltr: his function is linkable but not in header.
@@ -549,6 +562,9 @@ buildPythonPackage rec {
     ++ lib.optionals rocmSupport [
       rocmtoolkit_joined
       rocmPackages.setupRocmHook
+    ]
+    ++ lib.optionals xpuSupport [
+      torchXpuOpsSrc
     ];
 
   buildInputs =
