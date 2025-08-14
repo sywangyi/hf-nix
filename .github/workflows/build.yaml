@@ -21,6 +21,8 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
         env:
           USER: github_runner
+      - name: Nix info
+        run: nix-shell -p nix-info --run "nix-info -m"
       - name: Check formatting
         run: nix fmt -- --ci
       - name: Build
