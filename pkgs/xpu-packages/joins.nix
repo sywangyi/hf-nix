@@ -63,6 +63,7 @@ final: prev: {
           done
         done
 
+
         # Export environment variables for oneAPI tools
         export PATH="$out/oneapi/compiler/2025.2/bin:$PATH"
         export LD_LIBRARY_PATH="$out/oneapi/compiler/2025.2/lib:$LD_LIBRARY_PATH"

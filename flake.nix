@@ -114,6 +114,7 @@
                 inherit torch;
               };
               onednn-xpu = pkgsXpu.xpuPackages.onednn-xpu;
+              oneapi-torch-dev = pkgsXpu.xpuPackages.oneapi-torch-dev;
             };
 
             rocm = {

@@ -13,7 +13,7 @@ stdenv.mkDerivation rec {
 
   env.CXXFLAGS = "-isystem${oneapi-torch-dev}/oneapi/compiler/2025.2/lib/clang/21/include -I${stdenv.cc.libc_dev}/include -I${gcc.cc}/include/c++/${gcc.version}  -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu";
   env.LDFLAGS =
-    "-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc}/lib -L${stdenv.cc.libc}/lib64 -L${stdenv.cc.libc}/usr/lib -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib" +
+    "-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib" +
     " -L${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}" +
     " -L${stdenv.cc.cc.lib}/lib";
 
@@ -30,13 +30,9 @@ stdenv.mkDerivation rec {
     '')
     (writeShellScriptBin "g++" ''
       exec ${gcc.cc}/bin/g++ \
-        -nostdinc -nostdinc++ \
-        -I${oneapi-torch-dev}/oneapi/compiler/2025.2/lib/clang/21/include \
-        -isystem${oneapi-torch-dev}/oneapi/compiler/2025.2/lib/clang/21/include \
+        -nostdinc  \
         -isysroot ${stdenv.cc.libc_dev} \
         -isystem${stdenv.cc.libc_dev}/include \
-        -isystem${stdenv.cc.libc}/include \
-        -isystem${stdenv.cc.libc}/usr/include \
         -I${gcc.cc}/include/c++/${gcc.version} \
         -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu \
         -I${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}/include \

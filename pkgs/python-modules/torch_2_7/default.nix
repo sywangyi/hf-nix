@@ -450,12 +450,12 @@ buildPythonPackage rec {
     + lib.optionalString xpuSupport ''
       export SYCL_ROOT=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2
       export Pti_DIR=${xpuPackages.oneapi-torch-dev}/oneapi/pti/0.12/lib/cmake/pti
+      export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"
     export ICPX_CLANG_INCLUDE=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2/lib/clang/21/include
     export GCC_CXX_INCLUDE=${gcc.cc}/include/c++/${gcc.version}
-    export LIBC_INCLUDE=${stdenv.cc.libc_dev}/include
-    export CXXFLAGS="-B${stdenv.cc.libc}/lib -B${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include -isystem$ICPX_CLANG_INCLUDE -I$LIBC_INCLUDE -I$GCC_CXX_INCLUDE -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu -L${gcc.cc.lib}/lib -lgcc_s $CXXFLAGS"
-    export LDFLAGS="-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc}/lib -L${stdenv.cc.libc}/lib64 -L${stdenv.cc.libc}/usr/lib -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib -L${stdenv.cc}/lib/gcc/x86_64-unknown-linux-gnu/${stdenv.cc.version} -L${stdenv.cc.cc.lib}/lib ${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}/libgcc.a -L${gcc.cc.lib}/lib $LDFLAGS"
-    echo $LDFLAGS
+    #export CXXFLAGS="-v -nostdinc -B${stdenv.cc.libc}/lib -B${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include -isystem$GCC_CXX_INCLUDE -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu -I${gcc.cc}/include/c++/${gcc.version} -I${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}/include $CXXFLAGS"
+    #export LDFLAGS="-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc}/lib -L${stdenv.cc.libc}/lib64 -L${stdenv.cc.libc}/usr/lib -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib -L${stdenv.cc}/lib/gcc/x86_64-unknown-linux-gnu/${stdenv.cc.version} -L${stdenv.cc.cc.lib}/lib ${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}/libgcc.a -L${gcc.cc.lib}/lib $LDFLAGS"
+    #echo $LDFLAGS
     '';
 
   # Use pytorch's custom configurations
@@ -494,10 +494,6 @@ buildPythonPackage rec {
     [
       # (lib.cmakeBool "CMAKE_FIND_DEBUG_MODE" true)
       (lib.cmakeFeature "CUDAToolkit_VERSION" cudaPackages.cudaMajorMinorVersion)
-    ]
-    ++ lib.optionals xpuSupport [
-      "-DCMAKE_EXE_LINKER_FLAGS=-L${gcc.cc.lib}/lib -lgcc_s"
-      "-DCMAKE_SHARED_LINKER_FLAGS=-L${gcc.cc.lib}/lib -lgcc_s"
     ]
     ++ lib.optionals cudaSupport [
       # Unbreaks version discovery in enable_language(CUDA) when wrapping nvcc with ccache
@@ -586,6 +582,10 @@ buildPythonPackage rec {
       rocmPackages.setupRocmHook
     ]
     ++ lib.optionals xpuSupport [
+      stdenv.cc.libc
+      stdenv.cc.libc_dev
+      stdenv.cc
+      gcc.cc
       torchXpuOpsSrc
       xpuPackages.oneapi-torch-dev
       xpuPackages.onednn-xpu

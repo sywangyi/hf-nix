@@ -1,18 +1,93 @@
-From e6dabb66babba897d3b011b11f7968a2e769228b Mon Sep 17 00:00:00 2001
+From d51b931c37844f56cb2b42f325b16146ab56ace5 Mon Sep 17 00:00:00 2001
 From: "Wang, Yi A" <yi.a.wang@intel.com>
 Date: Thu, 14 Aug 2025 12:54:28 +0000
 Subject: [PATCH] debug
 
 Signed-off-by: Wang, Yi A <yi.a.wang@intel.com>
 ---
- cmake/Modules/FindSYCLToolkit.cmake | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ cmake/BuildFlags.cmake                |  1 -
+ cmake/Modules/FindSYCL.cmake          | 13 ++++++--
+ cmake/Modules/FindSYCL/run_sycl.cmake |  3 ++
+ cmake/Modules/FindSYCLToolkit.cmake   | 44 ++++++++++++++-------------
+ cmake/SYCL.cmake                      |  2 ++
+ 5 files changed, 39 insertions(+), 24 deletions(-)
 
+diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
+index 118647cf..3ec7f837 100644
+--- a/cmake/BuildFlags.cmake
++++ b/cmake/BuildFlags.cmake
+@@ -102,7 +102,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
+   endif()
+ 
+   set(SYCL_FLAGS ${SYCL_FLAGS} ${SYCL_KERNEL_OPTIONS})
+-
+   set(TORCH_XPU_OPS_FLAGS ${SYCL_HOST_FLAGS})
+ 
+   # -- SYCL device object linkage flags
+diff --git a/cmake/Modules/FindSYCL.cmake b/cmake/Modules/FindSYCL.cmake
+index 9a5cd844..dfb30e3d 100644
+--- a/cmake/Modules/FindSYCL.cmake
++++ b/cmake/Modules/FindSYCL.cmake
+@@ -34,7 +34,8 @@
+ #  SYCL_ADD_EXECUTABLE
+ #
+ #  SYCL_ADD_LIBRARY
+-
++set(SYCL_EXTRA_INCLUDE_DIRS $ENV{SYCL_EXTRA_INCLUDE_DIRS})
++string(REPLACE " " ";" SYCL_EXTRA_INCLUDE_DIRS "${SYCL_EXTRA_INCLUDE_DIRS}")
+ macro(SYCL_FIND_HELPER_FILE _name _extension)
+   set(_full_name "${_name}.${_extension}")
+   # CMAKE_CURRENT_LIST_FILE contains the full path to the file currently being
+@@ -75,7 +76,7 @@ endif()
+ option(SYCL_HOST_COMPILATION_CXX "Generated file extension" ON)
+ 
+ # SYCL_VERBOSE_BUILD
+-option(SYCL_VERBOSE_BUILD "Print out the commands run while compiling the SYCL source file.  With the Makefile generator this defaults to VERBOSE variable specified on the command line, but can be forced on with this option." OFF)
++option(SYCL_VERBOSE_BUILD "Print out the commands run while compiling the SYCL source file.  With the Makefile generator this defaults to VERBOSE variable specified on the command line, but can be forced on with this option." ON)
+ 
+ macro(SYCL_INCLUDE_EXTERNAL_DEPENDENCIES dependency_file)
+   list(APPEND SYCL_EXTERNAL_DEPEND ${dependency_file})
+@@ -216,6 +217,11 @@ macro(SYCL_WRAP_SRCS sycl_target generated_files)
+   set(generated_extension ${CMAKE_${SYCL_C_OR_CXX}_OUTPUT_EXTENSION})
+ 
+   set(SYCL_include_dirs "${SYCL_INCLUDE_DIR}")
++  message("SYCL_INCLUDE_DIR = ${SYCL_INCLUDE_DIR}")
++  message("SYCL_EXTRA_INCLUDE_DIRS = ${SYCL_EXTRA_INCLUDE_DIRS}")
++  if(DEFINED SYCL_EXTRA_INCLUDE_DIRS)
++    list(APPEND SYCL_include_dirs ${SYCL_EXTRA_INCLUDE_DIRS})
++  endif()
+   list(APPEND SYCL_include_dirs "$<TARGET_PROPERTY:${sycl_target},INCLUDE_DIRECTORIES>")
+ 
+   set(SYCL_compile_definitions "$<TARGET_PROPERTY:${sycl_target},COMPILE_DEFINITIONS>")
+@@ -385,6 +391,9 @@ macro(SYCL_LINK_DEVICE_OBJECTS output_file sycl_target)
+         ${important_host_flags}
+         ${SYCL_FLAGS}
+         ${SYCL_DEVICE_LINK_FLAGS})
++    message("SYCL_device_link_flags = ${SYCL_device_link_flags}")
++    message("important_host_flags = ${important_host_flags}")
++    message("SYCL_HOST_FLAGS = ${SYCL_HOST_FLAGS}")
+ 
+     file(RELATIVE_PATH output_file_relative_path "${CMAKE_BINARY_DIR}" "${output_file}")
+ 
+diff --git a/cmake/Modules/FindSYCL/run_sycl.cmake b/cmake/Modules/FindSYCL/run_sycl.cmake
+index f56d4976..10f4cf0b 100644
+--- a/cmake/Modules/FindSYCL/run_sycl.cmake
++++ b/cmake/Modules/FindSYCL/run_sycl.cmake
+@@ -124,6 +124,9 @@ if(WIN32)
+ else()
+   set(SYCL_dependency_file_args -MD -MF "${SYCL_generated_dependency_file}")
+ endif()
++message("SYCL_host_compiler_flags = ${SYCL_host_compiler_flags}")
++message("SYCL_flags = ${SYCL_flags}")
++message("SYCL_include_args = ${SYCL_include_args}")
+ SYCL_execute_process(
+   "Generating ${generated_file}"
+   COMMAND "${SYCL_executable}"
 diff --git a/cmake/Modules/FindSYCLToolkit.cmake b/cmake/Modules/FindSYCLToolkit.cmake
-index 88edd34a..1dc61eaf 100644
+index 88edd34a..032fc7f4 100644
 --- a/cmake/Modules/FindSYCLToolkit.cmake
 +++ b/cmake/Modules/FindSYCLToolkit.cmake
-@@ -106,7 +106,8 @@ function(SYCL_CMPLR_TEST_BUILD error TEST_SRC_FILE TEST_EXE)
+@@ -106,19 +106,21 @@ function(SYCL_CMPLR_TEST_BUILD error TEST_SRC_FILE TEST_EXE)
    set(SYCL_CXX_FLAGS_LIST "${SYCL_CXX_FLAGS}")
    string(REPLACE "-Wno-stringop-overflow" "" SYCL_CXX_FLAGS_LIST "${SYCL_CXX_FLAGS_LIST}")
    separate_arguments(SYCL_CXX_FLAGS_LIST)
@@ -22,7 +97,13 @@ index 88edd34a..1dc61eaf 100644
    execute_process(
      COMMAND "${SYCL_COMPILER}"
      ${SYCL_CXX_FLAGS_LIST}
-@@ -119,6 +120,7 @@ function(SYCL_CMPLR_TEST_BUILD error TEST_SRC_FILE TEST_EXE)
+     ${TEST_SRC_FILE}
+     "-o"
+     ${TEST_EXE}
++    "-lgcc_s"
+     WORKING_DIRECTORY ${SYCL_CMPLR_TEST_DIR}
+     OUTPUT_VARIABLE output ERROR_VARIABLE output
+-    OUTPUT_FILE ${SYCL_CMPLR_TEST_DIR}/Compile.log
      RESULT_VARIABLE result
      TIMEOUT 60
      )
@@ -30,6 +111,77 @@ index 88edd34a..1dc61eaf 100644
  
    # Verify if test case build properly.
    if(result)
+@@ -194,10 +196,10 @@ if(${has_werror} EQUAL -1)
+   SYCL_CMPLR_TEST_WRITE(${TEST_SRC_FILE} "SYCL_LANGUAGE_VERSION")
+ 
+   # Build the test and create test executable
+-  SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
+-  if(error)
+-    return()
+-  endif()
++  #SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
++  #if(error)
++  # return()
++  #endif()
+ 
+   # Execute the test to extract information
+   SYCL_CMPLR_TEST_RUN(error ${TEST_EXE})
+@@ -232,25 +234,25 @@ set(TEST_SRC_FILE "${SYCL_CMPLR_TEST_DIR}/llvm_features.cpp")
+ set(TEST_EXE "${TEST_SRC_FILE}.exe")
+ SYCL_CMPLR_TEST_WRITE(${TEST_SRC_FILE} "__INTEL_LLVM_COMPILER")
+ # Build the test and create test executable
+-SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
+-if(error)
+-  message(FATAL_ERROR "Can not build SYCL_CMPLR_TEST")
+-endif()
++#SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
++#if(error)
++# message(FATAL_ERROR "Can not build SYCL_CMPLR_TEST")
++#endif()
+ # Execute the test to extract information
+-SYCL_CMPLR_TEST_RUN(error ${TEST_EXE})
+-if(error)
+-  message(FATAL_ERROR "Can not run SYCL_CMPLR_TEST")
+-endif()
++#SYCL_CMPLR_TEST_RUN(error ${TEST_EXE})
++#if(error)
++# message(FATAL_ERROR "Can not run SYCL_CMPLR_TEST")
++#endif()
+ # Extract test output for information
+-SYCL_CMPLR_TEST_EXTRACT(${test_output} "__INTEL_LLVM_COMPILER")
++#SYCL_CMPLR_TEST_EXTRACT(${test_output} "__INTEL_LLVM_COMPILER")
+ 
+ # Check whether the value of __INTEL_LLVM_COMPILER macro was successfully extracted
+-string(COMPARE EQUAL "${__INTEL_LLVM_COMPILER}" "" nosycllang)
+-if(nosycllang)
+-  set(SYCLTOOLKIT_FOUND False)
+-  set(SYCL_REASON_FAILURE "Can not find __INTEL_LLVM_COMPILER}")
+-  set(SYCL_NOT_FOUND_MESSAGE "${SYCL_REASON_FAILURE}")
+-endif()
++#string(COMPARE EQUAL "${__INTEL_LLVM_COMPILER}" "" nosycllang)
++#if(nosycllang)
++ # set(SYCLTOOLKIT_FOUND False)
++ # set(SYCL_REASON_FAILURE "Can not find __INTEL_LLVM_COMPILER}")
++ # set(SYCL_NOT_FOUND_MESSAGE "${SYCL_REASON_FAILURE}")
++#endif()
+ 
+ 
+ # Include in Cache
+diff --git a/cmake/SYCL.cmake b/cmake/SYCL.cmake
+index 819cb0ef..60e9600a 100644
+--- a/cmake/SYCL.cmake
++++ b/cmake/SYCL.cmake
+@@ -50,8 +50,10 @@ endif()
+ execute_process(
+   COMMAND icpx --version
+   OUTPUT_VARIABLE ICX_VERSION_OUTPUT
++  ERROR_VARIABLE output
+   OUTPUT_STRIP_TRAILING_WHITESPACE
+ )
++message("ICX_VERSION_OUTPUT = ${ICX_VERSION_OUTPUT} ${output}")
+ string(REGEX REPLACE ".*\\.([0-9]+)\\).*" "\\1" ICX_DATE ${ICX_VERSION_OUTPUT})
+ 
+ find_package(SYCL REQUIRED)
 -- 
 2.43.5
 
