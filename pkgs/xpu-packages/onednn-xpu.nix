@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, cmake, ninja, python3, gcc, oneapi-torch-dev, writeShellScriptBin}:
+{ stdenv, fetchFromGitHub, cmake, ninja, python3, gcc, oneapi-torch-dev, writeShellScriptBin, dpcppVersion}:
 
 stdenv.mkDerivation rec {
   pname = "onednn-xpu";
@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-x4leRd0xPFUygjAv/D125CIXn7lYSyzUKsd9IDh/vCc=";
   };
 
-  env.CXXFLAGS = "-isystem${oneapi-torch-dev}/oneapi/compiler/2025.2/lib/clang/21/include -I${stdenv.cc.libc_dev}/include -I${gcc.cc}/include/c++/${gcc.version}  -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu";
+  env.CXXFLAGS = "-isystem${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/lib/clang/21/include -I${stdenv.cc.libc_dev}/include -I${gcc.cc}/include/c++/${gcc.version}  -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu";
   env.LDFLAGS =
     "-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib" +
     " -L${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}" +
@@ -19,13 +19,13 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     (writeShellScriptBin "icx" ''
-      exec ${oneapi-torch-dev}/oneapi/compiler/2025.2/bin/icx \
-      -B${stdenv.cc.libc}/lib -B${oneapi-torch-dev}/oneapi/compiler/2025.2/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include \
+      exec ${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/bin/icx \
+      -B${stdenv.cc.libc}/lib -B${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include \
       "$@"
     '')
     (writeShellScriptBin "icpx" ''
-      exec ${oneapi-torch-dev}/oneapi/compiler/2025.2/bin/icpx \
-      -B${stdenv.cc.libc}/lib -B${oneapi-torch-dev}/oneapi/compiler/2025.2/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include \
+      exec ${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/bin/icpx \
+      -B${stdenv.cc.libc}/lib -B${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include \
       "$@"
     '')
     (writeShellScriptBin "g++" ''
@@ -60,8 +60,8 @@ stdenv.mkDerivation rec {
     "-DONEDNN_BUILD_GRAPH=ON"
     "-DDNNL_LIBRARY_TYPE=STATIC"
     "-DDNNL_DPCPP_HOST_COMPILER=g++"
-    "-DOpenCL_INCLUDE_DIR=${oneapi-torch-dev}/oneapi/compiler/2025.2/linux/include"
-    "-DOpenCL_LIBRARY=${oneapi-torch-dev}/oneapi/compiler/2025.2/linux/lib/libOpenCL.so"
+    "-DOpenCL_INCLUDE_DIR=${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/linux/include"
+    "-DOpenCL_LIBRARY=${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/linux/lib/libOpenCL.so"
   ];
 
   installPhase = ''

@@ -1,16 +1,15 @@
-From d51b931c37844f56cb2b42f325b16146ab56ace5 Mon Sep 17 00:00:00 2001
+From 9e9df40ba7a906a2cb739f37711611a532f8834a Mon Sep 17 00:00:00 2001
 From: "Wang, Yi A" <yi.a.wang@intel.com>
 Date: Thu, 14 Aug 2025 12:54:28 +0000
 Subject: [PATCH] debug
 
 Signed-off-by: Wang, Yi A <yi.a.wang@intel.com>
 ---
- cmake/BuildFlags.cmake                |  1 -
- cmake/Modules/FindSYCL.cmake          | 13 ++++++--
- cmake/Modules/FindSYCL/run_sycl.cmake |  3 ++
- cmake/Modules/FindSYCLToolkit.cmake   | 44 ++++++++++++++-------------
- cmake/SYCL.cmake                      |  2 ++
- 5 files changed, 39 insertions(+), 24 deletions(-)
+ cmake/BuildFlags.cmake              |  1 -
+ cmake/Modules/FindSYCL.cmake        |  8 +++++-
+ cmake/Modules/FindSYCLToolkit.cmake | 44 +++++++++++++++--------------
+ cmake/SYCL.cmake                    |  2 ++
+ 4 files changed, 32 insertions(+), 23 deletions(-)
 
 diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
 index 118647cf..3ec7f837 100644
@@ -25,7 +24,7 @@ index 118647cf..3ec7f837 100644
  
    # -- SYCL device object linkage flags
 diff --git a/cmake/Modules/FindSYCL.cmake b/cmake/Modules/FindSYCL.cmake
-index 9a5cd844..dfb30e3d 100644
+index 9a5cd844..7fae5f5a 100644
 --- a/cmake/Modules/FindSYCL.cmake
 +++ b/cmake/Modules/FindSYCL.cmake
 @@ -34,7 +34,8 @@
@@ -38,15 +37,6 @@ index 9a5cd844..dfb30e3d 100644
  macro(SYCL_FIND_HELPER_FILE _name _extension)
    set(_full_name "${_name}.${_extension}")
    # CMAKE_CURRENT_LIST_FILE contains the full path to the file currently being
-@@ -75,7 +76,7 @@ endif()
- option(SYCL_HOST_COMPILATION_CXX "Generated file extension" ON)
- 
- # SYCL_VERBOSE_BUILD
--option(SYCL_VERBOSE_BUILD "Print out the commands run while compiling the SYCL source file.  With the Makefile generator this defaults to VERBOSE variable specified on the command line, but can be forced on with this option." OFF)
-+option(SYCL_VERBOSE_BUILD "Print out the commands run while compiling the SYCL source file.  With the Makefile generator this defaults to VERBOSE variable specified on the command line, but can be forced on with this option." ON)
- 
- macro(SYCL_INCLUDE_EXTERNAL_DEPENDENCIES dependency_file)
-   list(APPEND SYCL_EXTERNAL_DEPEND ${dependency_file})
 @@ -216,6 +217,11 @@ macro(SYCL_WRAP_SRCS sycl_target generated_files)
    set(generated_extension ${CMAKE_${SYCL_C_OR_CXX}_OUTPUT_EXTENSION})
  
@@ -59,30 +49,6 @@ index 9a5cd844..dfb30e3d 100644
    list(APPEND SYCL_include_dirs "$<TARGET_PROPERTY:${sycl_target},INCLUDE_DIRECTORIES>")
  
    set(SYCL_compile_definitions "$<TARGET_PROPERTY:${sycl_target},COMPILE_DEFINITIONS>")
-@@ -385,6 +391,9 @@ macro(SYCL_LINK_DEVICE_OBJECTS output_file sycl_target)
-         ${important_host_flags}
-         ${SYCL_FLAGS}
-         ${SYCL_DEVICE_LINK_FLAGS})
-+    message("SYCL_device_link_flags = ${SYCL_device_link_flags}")
-+    message("important_host_flags = ${important_host_flags}")
-+    message("SYCL_HOST_FLAGS = ${SYCL_HOST_FLAGS}")
- 
-     file(RELATIVE_PATH output_file_relative_path "${CMAKE_BINARY_DIR}" "${output_file}")
- 
-diff --git a/cmake/Modules/FindSYCL/run_sycl.cmake b/cmake/Modules/FindSYCL/run_sycl.cmake
-index f56d4976..10f4cf0b 100644
---- a/cmake/Modules/FindSYCL/run_sycl.cmake
-+++ b/cmake/Modules/FindSYCL/run_sycl.cmake
-@@ -124,6 +124,9 @@ if(WIN32)
- else()
-   set(SYCL_dependency_file_args -MD -MF "${SYCL_generated_dependency_file}")
- endif()
-+message("SYCL_host_compiler_flags = ${SYCL_host_compiler_flags}")
-+message("SYCL_flags = ${SYCL_flags}")
-+message("SYCL_include_args = ${SYCL_include_args}")
- SYCL_execute_process(
-   "Generating ${generated_file}"
-   COMMAND "${SYCL_executable}"
 diff --git a/cmake/Modules/FindSYCLToolkit.cmake b/cmake/Modules/FindSYCLToolkit.cmake
 index 88edd34a..032fc7f4 100644
 --- a/cmake/Modules/FindSYCLToolkit.cmake

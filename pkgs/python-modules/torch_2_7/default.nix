@@ -448,14 +448,7 @@ buildPythonPackage rec {
       python tools/amd_build/build_amd.py
     ''
     + lib.optionalString xpuSupport ''
-      export SYCL_ROOT=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2
-      export Pti_DIR=${xpuPackages.oneapi-torch-dev}/oneapi/pti/0.12/lib/cmake/pti
       export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"
-    export ICPX_CLANG_INCLUDE=${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2/lib/clang/21/include
-    export GCC_CXX_INCLUDE=${gcc.cc}/include/c++/${gcc.version}
-    #export CXXFLAGS="-v -nostdinc -B${stdenv.cc.libc}/lib -B${xpuPackages.oneapi-torch-dev}/oneapi/compiler/2025.2/lib/crt -isysroot ${stdenv.cc.libc_dev} -isystem${stdenv.cc.libc_dev}/include -isystem$GCC_CXX_INCLUDE -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu -I${gcc.cc}/include/c++/${gcc.version} -I${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}/include $CXXFLAGS"
-    #export LDFLAGS="-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc}/lib -L${stdenv.cc.libc}/lib64 -L${stdenv.cc.libc}/usr/lib -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib -L${stdenv.cc}/lib/gcc/x86_64-unknown-linux-gnu/${stdenv.cc.version} -L${stdenv.cc.cc.lib}/lib ${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}/libgcc.a -L${gcc.cc.lib}/lib $LDFLAGS"
-    #echo $LDFLAGS
     '';
 
   # Use pytorch's custom configurations
@@ -503,7 +496,7 @@ buildPythonPackage rec {
 
 
   preBuild = ''
-    export MAX_JOBS=$NIX_BUILD_CORES
+    export MAX_JOBS=4
     ${python.pythonOnBuildForHost.interpreter} setup.py build --cmake-only
     ${cmake}/bin/cmake build
   '';
