@@ -20,20 +20,6 @@
 }:
 
 let
-  # Filter out system dependencies that we don't want to include
-  filteredDeps = lib.filter (
-    dep:
-    !builtins.elem dep [
-      # Add any oneAPI-specific system dependencies to filter out
-      "intel-opencl"
-      "intel-level-zero-gpu"
-      "intel-media-va-driver-non-free"
-      "libdrm2"
-      "libc6"
-      "libgcc-s1"
-      "libstdc++6"
-    ]
-  ) deps;
   srcs = map (component: fetchurl { inherit (component) url sha256; }) components;
 in
 stdenv.mkDerivation rec {
@@ -50,7 +36,7 @@ stdenv.mkDerivation rec {
     stdenv.cc.cc.libgcc
     # Add zlib for libz.so.1 dependency
     zlib
-  ] ++ (map (dep: xpuPackages.${dep}) filteredDeps);
+  ];
 
   # Extract RPM packages using rpmextract
   unpackPhase = ''
@@ -95,6 +81,7 @@ stdenv.mkDerivation rec {
     "libsycl.so.8" # Intel SYCL runtime library
     "libmkl_sycl_blas.so.5"
     "libhwloc.so.15" # Hardware Locality library
+    "libhwloc.so.5" # Hardware Locality library
 
     # Intel math and compiler libraries
     "libimf.so" # Intel Math Functions library
@@ -123,6 +110,8 @@ stdenv.mkDerivation rec {
     "libpython3.7m.so.1.0"
     "libpython3.8.so.1.0"
     "libpython3.9.so.1.0"
+    "libonnxruntime.1.12.22.721.so"
+    "libelf.so.1"
   ];
 
   meta = with lib; {

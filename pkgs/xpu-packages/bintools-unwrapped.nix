@@ -24,7 +24,11 @@ runCommand "oneapi-bintools-unwrapped" { preferLocalBuild = true; } ''
     done
   fi
 
-  mkdir -p $out/nix-support
-  echo 'export SYCL_ROOT="${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}"' >> $out/nix-support/setup-hook
-  echo 'export Pti_DIR="${oneapi-torch-dev}/oneapi/pti/${ptiVersion}/lib/cmake/pti"' >> $out/nix-support/setup-hook
+  ln -sf ${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/lib $out/lib
+  ln -sf ${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}/include $out/include
+
+mkdir -p $out/nix-support
+echo 'export SYCL_ROOT="${oneapi-torch-dev}/oneapi/compiler/${dpcppVersion}"' >> $out/nix-support/setup-hook
+echo 'export Pti_DIR="${oneapi-torch-dev}/oneapi/pti/${ptiVersion}/lib/cmake/pti"' >> $out/nix-support/setup-hook
+chmod 0444 $out/nix-support/setup-hook
 ''

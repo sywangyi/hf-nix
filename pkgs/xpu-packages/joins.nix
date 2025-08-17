@@ -62,6 +62,14 @@ final: prev: {
             fi
           done
         done
+        pti_lib_dir="$out/oneapi/pti/${ptiVersion}/lib"
+        chmod +w $pti_lib_dir
+        if [ ! -e "$pti_lib_dir/libpti_view.so" ]; then
+          real_pti_view=$(ls "$pti_lib_dir"/libpti_view.so.* 2>/dev/null | head -n1)
+          if [ -n "$real_pti_view" ]; then
+            ln -sf "$(basename "$real_pti_view")" "$pti_lib_dir/libpti_view.so"
+          fi
+        fi
 
         # Export environment variables for oneAPI tools
         export PATH="$out/oneapi/compiler/${dpcppVersion}/bin:$PATH"
@@ -90,5 +98,6 @@ final: prev: {
   onednn-xpu = final.callPackage ./onednn-xpu.nix { 
     oneapi-torch-dev = final.oneapi-torch-dev;
     dpcppVersion = dpcppVersion;
+    oneapi-bintools-unwrapped = final.oneapi-bintools-unwrapped;
   };
 }

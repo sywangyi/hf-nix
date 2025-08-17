@@ -449,6 +449,7 @@ buildPythonPackage rec {
     ''
     + lib.optionalString xpuSupport ''
       export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"
+      export LD_LIBRARY_PATH=${xpuPackages.oneapi-bintools-unwrapped}/lib:$LD_LIBRARY_PATH
     '';
 
   # Use pytorch's custom configurations
