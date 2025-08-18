@@ -68,7 +68,9 @@ stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out/lib $out/include
     find . -name '*.a' -exec cp {} $out/lib/ \;
-    cp -r $src/include/* $out/include/
-    cp -r $src/third_party/level_zero $out/include/
+    cp -rn $src/include/* $out/include/
+    chmod +w $out/include/oneapi/dnnl
+    cp -rn include/oneapi/dnnl/* $out/include/oneapi/dnnl/
+    cp -rn $src/third_party/level_zero $out/include/
   '';
 }
