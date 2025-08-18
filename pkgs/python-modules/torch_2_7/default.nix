@@ -449,7 +449,10 @@ buildPythonPackage rec {
     ''
     + lib.optionalString xpuSupport ''
       export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"
-      export LD_LIBRARY_PATH=${xpuPackages.oneapi-bintools-unwrapped}/lib:$LD_LIBRARY_PATH
+      export TORCH_XPU_ARCH_LIST='pvc'
+      export PATH=$PATH:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/2025.4/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64
+      export LD_LIBRARY_PATH=${xpuPackages.oneapi-bintools-unwrapped}/lib:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/2025.4/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64:${stdenv.cc.cc.lib}/lib:${stdenv.cc.libc}/lib:$LD_LIBRARY_PATH
+      echo $LD_LIBRARY_PATH
     '';
 
   # Use pytorch's custom configurations
@@ -497,7 +500,7 @@ buildPythonPackage rec {
 
 
   preBuild = ''
-    export MAX_JOBS=4
+    export MAX_JOBS=$NIX_BUILD_CORES
     ${python.pythonOnBuildForHost.interpreter} setup.py build --cmake-only
     ${cmake}/bin/cmake build
   '';

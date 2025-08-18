@@ -64,10 +64,11 @@ stdenv.mkDerivation rec {
     "-DDNNL_LIBRARY_TYPE=STATIC"
     "-DDNNL_DPCPP_HOST_COMPILER=g++"
   ];
-
+ 
   installPhase = ''
     mkdir -p $out/lib $out/include
     find . -name '*.a' -exec cp {} $out/lib/ \;
-    cp -r include $out/
+    cp -r $src/include/* $out/include/
+    cp -r $src/third_party/level_zero $out/include/
   '';
 }

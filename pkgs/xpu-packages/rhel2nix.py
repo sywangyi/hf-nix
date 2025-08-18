@@ -152,7 +152,7 @@ def get_all_packages() -> Dict[str, Package]:
 
 def find_target_package(all_packages: Dict[str, Package], version: str) -> Package:
     """Find intel-deep-learning-essentials package with the specified version"""
-    target_name = "intel-deep-learning-essentials"
+    target_name = "intel-oneapi-base-toolkit"
 
     version_suffix = ".".join(version.split(".")[:2])  # 2025.2.0 -> 2025.2
 
@@ -300,8 +300,23 @@ def main():
         deps -= {name, f"{name}-rpath"}
         pkg_metadata["deps"] = list(sorted(deps))
 
-    print(f"Generated metadata for {len(metadata)} packages", file=sys.stderr)
-    print(json.dumps(metadata, indent=2))
+
+    # Step 7: Filter out unwanted packages by prefix
+    unwanted_prefixes = (
+        "intel-oneapi-dal",
+        "intel-oneapi-ipp",
+        "intel-oneapi-dpcpp-ct",
+        "intel-oneapi-dpcpp-debugger",
+    )
+
+    filtered_metadata = {
+        name: pkg
+        for name, pkg in metadata.items()
+        if not any(name.startswith(prefix) for prefix in unwanted_prefixes)
+    }
+
+    print(f"Generated metadata for {len(filtered_metadata)} packages", file=sys.stderr)
+    print(json.dumps(filtered_metadata, indent=2))
 
 
 if __name__ == "__main__":

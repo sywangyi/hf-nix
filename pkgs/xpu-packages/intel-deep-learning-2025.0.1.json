@@ -1,55 +1,79 @@
 {
-  "intel-deep-learning-essentials-2025.0": {
+  "intel-oneapi-advisor": {
     "deps": [
-      "intel-deep-learning-essentials-env-2025.0",
-      "intel-deep-learning-essentials-getting-started-2025.0",
+      "intel-oneapi-common-licensing-2025.2",
+      "intel-oneapi-common-oneapi-vars-2025.2",
+      "intel-oneapi-common-vars"
+    ],
+    "components": [
+      {
+        "name": "intel-oneapi-advisor",
+        "sha256": "d02af7a338d9ac78828101d5bf8df8347c523dbed67bc96635527f42fc38db2b",
+        "url": "https://yum.repos.intel.com/oneapi/intel-oneapi-advisor-2025.2.0-373.x86_64.rpm",
+        "version": "2025.2.0"
+      }
+    ],
+    "version": "2025.2.0"
+  },
+  "intel-oneapi-base-toolkit-2025.0": {
+    "deps": [
+      "intel-oneapi-advisor",
+      "intel-oneapi-base-toolkit-env-2025.0",
+      "intel-oneapi-base-toolkit-getting-started-2025.0",
       "intel-oneapi-ccl-devel-2021.14",
       "intel-oneapi-common-licensing-2025.0",
       "intel-oneapi-common-oneapi-vars-2025.0",
       "intel-oneapi-common-vars",
       "intel-oneapi-compiler-dpcpp-cpp-2025.0",
+      "intel-oneapi-dal-devel-2025.0",
       "intel-oneapi-dev-utilities-2025.0",
       "intel-oneapi-dnnl-devel-2025.0",
+      "intel-oneapi-dpcpp-ct-2025.0",
+      "intel-oneapi-dpcpp-debugger-2025.0",
+      "intel-oneapi-ipp-devel-2022.0",
+      "intel-oneapi-ippcp-devel-2025.0",
       "intel-oneapi-libdpstd-devel-2022.7",
       "intel-oneapi-mkl-devel-2025.0",
+      "intel-oneapi-tbb-devel-2022.0",
       "intel-oneapi-tlt-2025.0",
+      "intel-oneapi-vtune",
       "intel-pti-dev-0.10"
     ],
     "components": [
       {
-        "name": "intel-deep-learning-essentials-2025.0",
-        "sha256": "94d9ed9f16c980e475cd34f87845375e76c8e718ac2fd2dfa09c90b776125b2d",
-        "url": "https://yum.repos.intel.com/oneapi/intel-deep-learning-essentials-2025.0-2025.0.2-6.x86_64.rpm",
-        "version": "2025.0.2"
+        "name": "intel-oneapi-base-toolkit-2025.0",
+        "sha256": "b24595d9c4251c7a57e7799209688d5fed7da4c9e1e3544b5b48619c2c13199e",
+        "url": "https://yum.repos.intel.com/oneapi/intel-oneapi-base-toolkit-2025.0-2025.0.1-45.x86_64.rpm",
+        "version": "2025.0.1"
       }
     ],
-    "version": "2025.0.2"
+    "version": "2025.0.1"
   },
-  "intel-deep-learning-essentials-env-2025.0": {
+  "intel-oneapi-base-toolkit-env-2025.0": {
     "deps": [
       "intel-oneapi-tlt-2025.0"
     ],
     "components": [
       {
-        "name": "intel-deep-learning-essentials-env-2025.0",
-        "sha256": "75ff4b471b9c4d186a7af7d70961e506688da56189f2a254e3cf2af3218be1bc",
-        "url": "https://yum.repos.intel.com/oneapi/intel-deep-learning-essentials-env-2025.0-2025.0.2-6.noarch.rpm",
-        "version": "2025.0.2"
+        "name": "intel-oneapi-base-toolkit-env-2025.0",
+        "sha256": "e392fa3afbc6f67a5b8647ff682f774d7287bb396eeb22ef885c05ee71658ef4",
+        "url": "https://yum.repos.intel.com/oneapi/intel-oneapi-base-toolkit-env-2025.0-2025.0.1-45.noarch.rpm",
+        "version": "2025.0.1"
       }
     ],
-    "version": "2025.0.2"
+    "version": "2025.0.1"
   },
-  "intel-deep-learning-essentials-getting-started-2025.0": {
+  "intel-oneapi-base-toolkit-getting-started-2025.0": {
     "deps": [],
     "components": [
       {
-        "name": "intel-deep-learning-essentials-getting-started-2025.0",
-        "sha256": "388effb3ad5a20c94ddd68c4cc3e4d9e47ae89a22b9c5dab8efc2785f749294c",
-        "url": "https://yum.repos.intel.com/oneapi/intel-deep-learning-essentials-getting-started-2025.0-2025.0.2-6.noarch.rpm",
-        "version": "2025.0.2"
+        "name": "intel-oneapi-base-toolkit-getting-started-2025.0",
+        "sha256": "2d0117519c90c97f497cfdadbefa03d7d3b7d25824be332e08f1bb7849623984",
+        "url": "https://yum.repos.intel.com/oneapi/intel-oneapi-base-toolkit-getting-started-2025.0-2025.0.1-45.noarch.rpm",
+        "version": "2025.0.1"
       }
     ],
-    "version": "2025.0.2"
+    "version": "2025.0.1"
   },
   "intel-oneapi-ccl-2021.14": {
     "deps": [
@@ -378,22 +402,6 @@
       }
     ],
     "version": "2025.0.4"
-  },
-  "intel-oneapi-dpcpp-debugger-2025.0": {
-    "deps": [
-      "intel-oneapi-common-licensing-2025.0",
-      "intel-oneapi-common-oneapi-vars-2025.0",
-      "intel-oneapi-common-vars"
-    ],
-    "components": [
-      {
-        "name": "intel-oneapi-dpcpp-debugger-2025.0",
-        "sha256": "f919cd3b99315b7a57c6f8d18acd811feca29c32ea721f28cbca55524760c23f",
-        "url": "https://yum.repos.intel.com/oneapi/intel-oneapi-dpcpp-debugger-2025.0-2025.0.0-663.x86_64.rpm",
-        "version": "2025.0.0"
-      }
-    ],
-    "version": "2025.0.0"
   },
   "intel-oneapi-icc-eclipse-plugin-cpp-2025.0": {
     "deps": [
@@ -902,6 +910,22 @@
       }
     ],
     "version": "0.9.1"
+  },
+  "intel-oneapi-vtune": {
+    "deps": [
+      "intel-oneapi-common-licensing-2025.2",
+      "intel-oneapi-common-oneapi-vars-2025.2",
+      "intel-oneapi-common-vars"
+    ],
+    "components": [
+      {
+        "name": "intel-oneapi-vtune",
+        "sha256": "a7fa8677199edb77cadceb9e15bde59a03ad05a12974a69a5541df0551c1bfa5",
+        "url": "https://yum.repos.intel.com/oneapi/intel-oneapi-vtune-2025.4.0-247.x86_64.rpm",
+        "version": "2025.4.0"
+      }
+    ],
+    "version": "2025.4.0"
   },
   "intel-pti-0.10": {
     "deps": [

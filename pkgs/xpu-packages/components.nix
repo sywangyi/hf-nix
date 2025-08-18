@@ -6,6 +6,5 @@ prev.lib.mapAttrs (
   prev.callPackage ./generic.nix {
     inherit pname;
     inherit (metadata) components deps version;
-    xpuPackages = final;
   }
 ) prev.packageMetadata

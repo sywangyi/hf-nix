@@ -6,7 +6,6 @@
   stdenv,
   rpmextract,
   rsync,
-  xpuPackages,
   zlib,
 
   pname,
@@ -112,6 +111,45 @@ stdenv.mkDerivation rec {
     "libpython3.9.so.1.0"
     "libonnxruntime.1.12.22.721.so"
     "libelf.so.1"
+    "libdrm.so.2"
+    "libX11.so.6"
+    "libXext.so.6"
+    "libxcb.so.1"
+    "libgobject-2.0.so.0"
+    "libglib-2.0.so.0"
+    "libgio-2.0.so.0"
+    "libnss3.so"
+    "libnssutil3.so"
+    "libsmime3.so"
+    "libopencl-clang.so.14"
+    "libbz2.so.1"
+    "libcrypt.so.1"
+    "libffi.so.6"
+    "libncursesw.so.5"
+    "libtinfo.so.5"
+    "libpanelw.so.5"
+    "libgdbm.so.4"
+    "libsqlite3.so.0"
+    "libuuid.so.1"
+    "libgdbm_compat.so.4"
+    "libnspr4.so"
+    "libdbus-1.so.3"
+    "libatk-1.0.so.0"
+    "libatk-bridge-2.0.so.0"
+    "libcups.so.2"
+    "libgtk-3.so.0"
+    "libpango-1.0.so.0"
+    "libcairo.so.2"
+    "libXcomposite.so.1"
+    "libXdamage.so.1"
+    "libXfixes.so.3"
+    "libXrandr.so.2"
+    "libgbm.so.1"
+    "libexpat.so.1"
+    "libxkbcommon.so.0"
+    "libudev.so.1"
+    "libasound.so.2"
+    "libatspi.so.0"
   ];
 
   meta = with lib; {

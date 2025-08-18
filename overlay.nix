@@ -34,8 +34,6 @@ rec {
 
   rocmPackages = final.rocmPackages_6_3;
 
-  xpuPackages = final.xpuPackages_2025_0;
-
   # Remove when we remove ROCm 6.2.
   suitesparse_4_4 = prev.suitesparse_4_4.overrideAttrs (
     _: prevAttrs: {
@@ -190,7 +188,7 @@ rec {
 
         torch_2_6 = callPackage ./pkgs/python-modules/torch_2_6 { };
 
-        torch_2_7 = callPackage ./pkgs/python-modules/torch_2_7 { };
+        torch_2_7 = callPackage ./pkgs/python-modules/torch_2_7 {xpuPackages=final.xpuPackages_2025_0;};
 
         torch_2_8 = callPackage ./pkgs/python-modules/torch_2_8 { };
 
@@ -225,7 +223,7 @@ rec {
     flattenVersion = prev.lib.strings.replaceStrings [ "." ] [ "_" ];
     readPackageMetadata = path: (builtins.fromJSON (builtins.readFile path));
     xpuVersions = [
-      "2025.0.2"
+      "2025.0.1"
       "2025.1.3"
       "2025.2.0"
     ];

@@ -1,4 +1,4 @@
-{ xpuPackages, dpcppVersion, ptiVersion, mklVersion, tbbVersion, ompVersion}:
+{dpcppVersion, ptiVersion, mklVersion, tbbVersion, ompVersion}:
 
 final: prev: {
   # Intel oneAPI development environment for PyTorch compilation
@@ -36,6 +36,7 @@ final: prev: {
         # PTI (Profiling and Tracing Interface) - required for PyTorch compilation
         final."intel-pti-dev-${ptiVersion}"
         final."intel-pti-${ptiVersion}"
+        final."intel-oneapi-vtune"
       ];
 
       # Standard development tools - always available
@@ -69,6 +70,12 @@ final: prev: {
           if [ -n "$real_pti_view" ]; then
             ln -sf "$(basename "$real_pti_view")" "$pti_lib_dir/libpti_view.so"
           fi
+        fi
+
+        igc_dir="$out/oneapi/vtune/2025.4/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64"
+        chmod +w $igc_dir
+        if [ -f "$igc_dir/libigc.so" ] && [ ! -e "$igc_dir/libigc.so.1" ]; then
+          ln -sf libigc.so "$igc_dir/libigc.so.1"
         fi
 
         # Export environment variables for oneAPI tools
