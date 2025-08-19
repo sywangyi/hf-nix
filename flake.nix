@@ -96,6 +96,7 @@
                 quantization-eetq
                 rotary
                 torch
+                transformers
                 ;
             };
 

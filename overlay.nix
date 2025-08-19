@@ -192,6 +192,8 @@ rec {
 
         torch_2_8 = callPackage ./pkgs/python-modules/torch_2_8 { };
 
+        transformers = callPackage ./pkgs/python-modules/transformers { };
+
         triton-rocm = callPackage ./pkgs/python-modules/triton-rocm { };
       }
     )
