@@ -36,14 +36,14 @@ buildPythonPackage rec {
     tqdm
     typing-extensions
   ];
-  
+
   optional-dependencies = {
     xet = [ hf-xet ];
   };
 
   # Tests require network access
   doCheck = false;
-  
+
   # Skip runtime deps check for optional dependencies
   dontCheckRuntimeDeps = true;
 
