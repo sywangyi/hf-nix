@@ -6,9 +6,6 @@ final: prev: {
     {
       lib,
       stdenv,
-      gcc,
-      cmake,
-      pkg-config,
       rsync,
     }:
     let
@@ -23,8 +20,23 @@ final: prev: {
         final."intel-oneapi-compiler-shared-common-${dpcppVersion}"
         final."intel-oneapi-compiler-dpcpp-cpp-common-${dpcppVersion}"
         # MKL for math operations - most important for PyTorch
+        final."intel-oneapi-mkl-classic-include-${mklVersion}"
+        final."intel-oneapi-mkl-cluster-${mklVersion}"
+        final."intel-oneapi-mkl-cluster-devel-${mklVersion}"
         final."intel-oneapi-mkl-core-${mklVersion}"
         final."intel-oneapi-mkl-devel-${mklVersion}"
+        final."intel-oneapi-mkl-core-devel-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-devel-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-include-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-blas-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-lapack-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-dft-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-data-fitting-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-rng-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-sparse-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-stats-${mklVersion}"
+        final."intel-oneapi-mkl-sycl-vm-${mklVersion}"
         # Common infrastructure packages
         #final."intel-oneapi-common-licensing-2025.2"
         final.intel-oneapi-common-vars
@@ -39,15 +51,6 @@ final: prev: {
         final."intel-oneapi-vtune"
       ];
 
-      # Standard development tools - always available
-      standardPackages = [
-        gcc
-        cmake
-        pkg-config
-      ];
-
-      # Combine essential Intel packages with standard tools
-      allPackages = essentialIntelPackages ++ standardPackages;
     in
     stdenv.mkDerivation {
       name = "oneapi-torch-dev-${dpcppVersion}";
@@ -55,7 +58,7 @@ final: prev: {
 
       buildCommand = ''
         # Merge all top-level directories from every package into $out using rsync
-        for pkg in ${lib.concatStringsSep " " (essentialIntelPackages ++ standardPackages)}; do
+        for pkg in ${lib.concatStringsSep " " essentialIntelPackages}; do
           for subdir in $(ls "$pkg"); do
             if [ -d "$pkg/$subdir" ]; then
               mkdir -p "$out/$subdir"
@@ -63,7 +66,24 @@ final: prev: {
             fi
           done
         done
-        pti_lib_dir="$out/oneapi/pti/${ptiVersion}/lib"
+
+        # Create 'latest' symlink in compiler,mkl,pti pointing to the current version
+        chmod +w $out/oneapi/compiler
+        ln -sf $out/oneapi/compiler/${dpcppVersion} $out/oneapi/compiler/latest
+
+        chmod +w $out/oneapi/mkl
+        ln -sf $out/oneapi/mkl/${mklVersion} $out/oneapi/mkl/latest
+
+        chmod +w $out/oneapi/pti
+        ln -sf $out/oneapi/pti/${ptiVersion} $out/oneapi/pti/latest
+
+        chmod +w $out/oneapi/tbb
+        ln -sf $out/oneapi/tbb/${tbbVersion} $out/oneapi/tbb/latest
+
+        chmod +w $out/oneapi/vtune
+        ln -sf $out/oneapi/vtune/* $out/oneapi/vtune/latest
+
+        pti_lib_dir="$out/oneapi/pti/latest/lib"
         chmod +w $pti_lib_dir
         if [ ! -e "$pti_lib_dir/libpti_view.so" ]; then
           real_pti_view=$(ls "$pti_lib_dir"/libpti_view.so.* 2>/dev/null | head -n1)
@@ -72,16 +92,12 @@ final: prev: {
           fi
         fi
 
-        igc_dir="$out/oneapi/vtune/2025.4/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64"
+        igc_dir="$out/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64"
         chmod +w $igc_dir
         if [ -f "$igc_dir/libigc.so" ] && [ ! -e "$igc_dir/libigc.so.1" ]; then
           ln -sf libigc.so "$igc_dir/libigc.so.1"
         fi
 
-        # Export environment variables for oneAPI tools
-        export PATH="$out/oneapi/compiler/${dpcppVersion}/bin:$PATH"
-        export LD_LIBRARY_PATH="$out/oneapi/compiler/${dpcppVersion}/lib:$LD_LIBRARY_PATH"
-        export CPATH="$out/oneapi/compiler/${dpcppVersion}/include:$CPATH"
       '';
       meta = with lib; {
         description = "Intel oneAPI development environment for PyTorch (copied files)";
@@ -96,15 +112,4 @@ final: prev: {
     }
   ) { };
 
-  oneapi-bintools-unwrapped = final.callPackage ./bintools-unwrapped.nix {
-    oneapi-torch-dev = final.oneapi-torch-dev;
-    dpcppVersion = dpcppVersion;
-    ptiVersion = ptiVersion;
-  };
-
-  onednn-xpu = final.callPackage ./onednn-xpu.nix { 
-    oneapi-torch-dev = final.oneapi-torch-dev;
-    dpcppVersion = dpcppVersion;
-    oneapi-bintools-unwrapped = final.oneapi-bintools-unwrapped;
-  };
 }

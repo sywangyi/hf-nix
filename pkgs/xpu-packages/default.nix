@@ -34,9 +34,23 @@ let
     # Base package set.
     (import ./components.nix)
     # Packages that are joins of other packages.
-    (callPackage ./joins.nix { 
+    (callPackage ./oneapi-torch-dev.nix {
       inherit dpcppVersion ptiVersion mklVersion tbbVersion ompVersion;
     })
+
+    (final: prev: {
+      oneapi-bintools-unwrapped = final.callPackage ./bintools-unwrapped.nix {
+        oneapi-torch-dev = final.oneapi-torch-dev;
+      };
+    })
+
+    (final: prev: {
+      onednn-xpu = final.callPackage ./onednn-xpu.nix {
+        oneapi-bintools-unwrapped = final.oneapi-bintools-unwrapped;
+        dpcppVersion = dpcppVersion;
+      };
+    })
+
   ];
 in
 lib.makeScope newScope (lib.extends composed fixedPoint)

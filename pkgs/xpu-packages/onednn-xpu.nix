@@ -1,19 +1,32 @@
-{ stdenv, fetchFromGitHub, cmake, ninja, python3, gcc, oneapi-torch-dev, writeShellScriptBin, dpcppVersion,oneapi-bintools-unwrapped, autoPatchelfHook}:
+{ stdenv, fetchFromGitHub, cmake, ninja, gcc, writeShellScriptBin, oneapi-bintools-unwrapped, dpcppVersion}:
 
+let
+  version =
+    if dpcppVersion == "2025.1" then "3.8.1"
+    else if dpcppVersion == "2025.0" then "3.7.1"
+    else "3.8.1";
+  rev =
+    if dpcppVersion == "2025.1" then "v3.8.1"
+    else if dpcppVersion == "2025.0" then "v3.7.1"
+    else "v3.8.1";
+  sha256 =
+    if dpcppVersion == "2025.1" then "sha256-x4leRd0xPFUygjAv/D125CIXn7lYSyzUKsd9IDh/vCc="
+    else if dpcppVersion == "2025.0" then "sha256-+4z5l0mJsw0SOW245GfZh41mdHGZ8u+xED7afm6pQjs="
+    else "sha256-x4leRd0xPFUygjAv/D125CIXn7lYSyzUKsd9IDh/vCc=";
+in
 stdenv.mkDerivation rec {
   pname = "onednn-xpu";
-  version = "3.8.1";
+  inherit version;
 
   src = fetchFromGitHub {
     owner = "oneapi-src";
     repo = "oneDNN";
-    rev = "v3.8.1";
-    sha256 = "sha256-x4leRd0xPFUygjAv/D125CIXn7lYSyzUKsd9IDh/vCc=";
+    inherit rev sha256;
   };
 
   env.CXXFLAGS = "-isystem${oneapi-bintools-unwrapped}/lib/clang/21/include -I${stdenv.cc.libc_dev}/include -I${gcc.cc}/include/c++/${gcc.version}  -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu";
   env.LDFLAGS =
-    "-L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${stdenv.cc.libc_dev}/lib -L${stdenv.cc.libc_dev}/lib64 -L${stdenv.cc.libc_dev}/usr/lib" +
+    "-L${stdenv.cc}/lib -L${stdenv.cc}/lib64" +
     " -L${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version}" +
     " -L${stdenv.cc.cc.lib}/lib";
 
@@ -42,15 +55,7 @@ stdenv.mkDerivation rec {
     '')
     cmake
     ninja
-    python3
-  ];
-  buildInputs = [
-    oneapi-torch-dev
     oneapi-bintools-unwrapped
-    stdenv.cc.libc
-    stdenv.cc.libc_dev
-    stdenv.cc
-    gcc.cc
   ];
 
   cmakeFlags = [
@@ -64,13 +69,18 @@ stdenv.mkDerivation rec {
     "-DDNNL_LIBRARY_TYPE=STATIC"
     "-DDNNL_DPCPP_HOST_COMPILER=g++"
   ];
- 
+
   installPhase = ''
     mkdir -p $out/lib $out/include
     find . -name '*.a' -exec cp {} $out/lib/ \;
     cp -rn $src/include/* $out/include/
     chmod +w $out/include/oneapi/dnnl
     cp -rn include/oneapi/dnnl/* $out/include/oneapi/dnnl/
-    cp -rn $src/third_party/level_zero $out/include/
+    if [ "$version" = "3.8.1" ]; then
+      cp -rn "$src/third_party/level_zero" "$out/include/"
+    else
+      cp -rn "$src/src/gpu/intel/sycl/l0/level_zero" "$out/include/"
+    fi
   '';
 }
+

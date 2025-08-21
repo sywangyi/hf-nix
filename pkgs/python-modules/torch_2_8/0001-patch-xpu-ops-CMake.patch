@@ -1,0 +1,127 @@
+From 77406d38ccbc9a6dea8c66d892256156bbcdc800 Mon Sep 17 00:00:00 2001
+From: "Wang, Yi A" <yi.a.wang@intel.com>
+Date: Wed, 20 Aug 2025 17:28:03 -0700
+Subject: [PATCH] patch xpu ops CMake
+
+Signed-off-by: Wang, Yi A <yi.a.wang@intel.com>
+---
+ cmake/BuildFlags.cmake              |  2 ++
+ cmake/Modules/FindSYCL.cmake        |  6 ++++-
+ cmake/Modules/FindSYCLToolkit.cmake | 39 ++++++++++++++---------------
+ 3 files changed, 26 insertions(+), 21 deletions(-)
+
+diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
+index ec9aaccb..be16030f 100644
+--- a/cmake/BuildFlags.cmake
++++ b/cmake/BuildFlags.cmake
+@@ -83,6 +83,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
+     set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -fno-approx-func)
+     set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -Wno-absolute-value)
+     set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -no-ftz)
++    set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -D_GLIBCXX_USE_CXX11_ABI=1)
+   endif()
+ 
+   if(CMAKE_BUILD_TYPE MATCHES Debug)
+@@ -104,6 +105,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
+   endif()
+ 
+   set(TORCH_XPU_OPS_FLAGS ${SYCL_HOST_FLAGS})
++  message("SYCL_KERNEL_OPTIONS = $SYCL_KERNEL_OPTIONS")
+ 
+   # -- SYCL device object linkage flags
+   include(ProcessorCount)
+diff --git a/cmake/Modules/FindSYCL.cmake b/cmake/Modules/FindSYCL.cmake
+index 86457ba3..0feec0fa 100644
+--- a/cmake/Modules/FindSYCL.cmake
++++ b/cmake/Modules/FindSYCL.cmake
+@@ -34,7 +34,8 @@
+ #  SYCL_ADD_EXECUTABLE
+ #
+ #  SYCL_ADD_LIBRARY
+-
++set(SYCL_EXTRA_INCLUDE_DIRS $ENV{SYCL_EXTRA_INCLUDE_DIRS})
++string(REPLACE " " ";" SYCL_EXTRA_INCLUDE_DIRS "${SYCL_EXTRA_INCLUDE_DIRS}")
+ macro(SYCL_FIND_HELPER_FILE _name _extension)
+   set(_full_name "${_name}.${_extension}")
+   # CMAKE_CURRENT_LIST_FILE contains the full path to the file currently being
+@@ -216,6 +217,9 @@ macro(SYCL_WRAP_SRCS sycl_target generated_files)
+   set(generated_extension ${CMAKE_${SYCL_C_OR_CXX}_OUTPUT_EXTENSION})
+ 
+   set(SYCL_include_dirs "${SYCL_INCLUDE_DIR}")
++  if(DEFINED SYCL_EXTRA_INCLUDE_DIRS)
++    list(APPEND SYCL_include_dirs ${SYCL_EXTRA_INCLUDE_DIRS})
++  endif()
+   list(APPEND SYCL_include_dirs "$<TARGET_PROPERTY:${sycl_target},INCLUDE_DIRECTORIES>")
+ 
+   set(SYCL_compile_definitions "$<TARGET_PROPERTY:${sycl_target},COMPILE_DEFINITIONS>")
+diff --git a/cmake/Modules/FindSYCLToolkit.cmake b/cmake/Modules/FindSYCLToolkit.cmake
+index 5fc6a9ea..3bc4f23a 100644
+--- a/cmake/Modules/FindSYCLToolkit.cmake
++++ b/cmake/Modules/FindSYCLToolkit.cmake
+@@ -119,7 +119,6 @@ function(SYCL_CMPLR_TEST_BUILD error TEST_SRC_FILE TEST_EXE)
+     RESULT_VARIABLE result
+     TIMEOUT 60
+     )
+-
+   # Verify if test case build properly.
+   if(result)
+     message("SYCL: feature test compile failed!!")
+@@ -187,10 +186,10 @@ if(${has_werror} EQUAL -1)
+   SYCL_CMPLR_TEST_WRITE(${TEST_SRC_FILE} "SYCL_LANGUAGE_VERSION")
+ 
+   # Build the test and create test executable
+-  SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
+-  if(error)
+-    return()
+-  endif()
++  #SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
++  #if(error)
++  # return()
++  #endif()
+ 
+   # Execute the test to extract information
+   SYCL_CMPLR_TEST_RUN(error ${TEST_EXE})
+@@ -225,25 +224,25 @@ set(TEST_SRC_FILE "${SYCL_CMPLR_TEST_DIR}/llvm_features.cpp")
+ set(TEST_EXE "${TEST_SRC_FILE}.exe")
+ SYCL_CMPLR_TEST_WRITE(${TEST_SRC_FILE} "__INTEL_LLVM_COMPILER")
+ # Build the test and create test executable
+-SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
+-if(error)
+-  message(FATAL_ERROR "Can not build SYCL_CMPLR_TEST")
+-endif()
++#SYCL_CMPLR_TEST_BUILD(error ${TEST_SRC_FILE} ${TEST_EXE})
++#if(error)
++# message(FATAL_ERROR "Can not build SYCL_CMPLR_TEST")
++#endif()
+ # Execute the test to extract information
+-SYCL_CMPLR_TEST_RUN(error ${TEST_EXE})
+-if(error)
+-  message(FATAL_ERROR "Can not run SYCL_CMPLR_TEST")
+-endif()
++#SYCL_CMPLR_TEST_RUN(error ${TEST_EXE})
++#if(error)
++# message(FATAL_ERROR "Can not run SYCL_CMPLR_TEST")
++#endif()
+ # Extract test output for information
+-SYCL_CMPLR_TEST_EXTRACT(${test_output} "__INTEL_LLVM_COMPILER")
++#SYCL_CMPLR_TEST_EXTRACT(${test_output} "__INTEL_LLVM_COMPILER")
+ 
+ # Check whether the value of __INTEL_LLVM_COMPILER macro was successfully extracted
+-string(COMPARE EQUAL "${__INTEL_LLVM_COMPILER}" "" nosycllang)
+-if(nosycllang)
+-  set(SYCLTOOLKIT_FOUND False)
+-  set(SYCL_REASON_FAILURE "Can not find __INTEL_LLVM_COMPILER}")
+-  set(SYCL_NOT_FOUND_MESSAGE "${SYCL_REASON_FAILURE}")
+-endif()
++#string(COMPARE EQUAL "${__INTEL_LLVM_COMPILER}" "" nosycllang)
++#if(nosycllang)
++ # set(SYCLTOOLKIT_FOUND False)
++ # set(SYCL_REASON_FAILURE "Can not find __INTEL_LLVM_COMPILER}")
++ # set(SYCL_NOT_FOUND_MESSAGE "${SYCL_REASON_FAILURE}")
++#endif()
+ 
+ 
+ # Include in Cache
+-- 
+2.43.0
+

@@ -8,7 +8,6 @@
   python,
   config,
   cudaSupport ? config.cudaSupport,
-  xpuSupport ? config.xpuSupport,
   cudaPackages,
   autoAddDriverRunpath,
   effectiveMagma ?
@@ -108,6 +107,7 @@
   # ROCm dependencies
   rocmSupport ? config.rocmSupport,
   rocmPackages,
+  xpuSupport ? (config.xpuSupport or false),
   xpuPackages,
   gpuTargets ? [ ],
   gcc,
@@ -339,8 +339,7 @@ buildPythonPackage rec {
 
   postUnpack = lib.optionalString xpuSupport ''
     cp -r --no-preserve=mode ${torchXpuOpsSrc} $sourceRoot/third_party/torch-xpu-ops
-    patch -d $sourceRoot/third_party/torch-xpu-ops -p1 < ${./0001-debug.patch}
-    echo ${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version} ${stdenv.cc} ${stdenv.cc.libc} ${gcc.cc.lib}
+    patch -d $sourceRoot/third_party/torch-xpu-ops -p1 < ${./0001-patch-xpu-ops-Cmake.patch}
   '';
 
   postPatch =
@@ -407,16 +406,6 @@ buildPythonPackage rec {
       # comment torch-xpu-ops git clone block in pytorch/caffe2/CMakeLists.txt
       sed -i '/set(TORCH_XPU_OPS_REPO_URL/,/^  endif()/s/^/#/' caffe2/CMakeLists.txt
       sed -i '/execute_process(/,/^  endif()/s/^/#/' caffe2/CMakeLists.txt
-      # add lpthread, lrt link for sycl link
-      #substituteInPlace third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake \
-       # --replace-fail 'list(APPEND SYCL_FLAGS "-fsycl")' 'list(APPEND SYCL_FLAGS "-fsycl" "-lpthread" "-lrt")'
-      #sed -i '/if(error)/,/endif()/s/^/#/' third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
-      #sed -i '/SYCL_CMPLR_TEST_RUN(/,/^  endif()/s/^/#/' third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
-      #cat third_party/torch-xpu-ops/cmake/Modules/FindSYCLToolkit.cmake
-      find . -type f -name 'link.txt' -exec sed -i 's/-lgcc/-lgcc_s/g' {} +
-      find . -type f -name 'flags.make' -exec sed -i 's/-lgcc//g' {} +
-
-
     ''
     # error: no member named 'aligned_alloc' in the global namespace; did you mean simply 'aligned_alloc'
     # This lib overrided aligned_alloc hence the error message. Tltr: his function is linkable but not in header.
@@ -448,11 +437,9 @@ buildPythonPackage rec {
       python tools/amd_build/build_amd.py
     ''
     + lib.optionalString xpuSupport ''
-      export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"
       export TORCH_XPU_ARCH_LIST='pvc'
-      export PATH=$PATH:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/2025.4/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64
-      export LD_LIBRARY_PATH=${xpuPackages.oneapi-bintools-unwrapped}/lib:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/2025.4/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64:${stdenv.cc.cc.lib}/lib:${stdenv.cc.libc}/lib:$LD_LIBRARY_PATH
-      echo $LD_LIBRARY_PATH
+      export PATH=$PATH:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64
+      export LD_LIBRARY_PATH=${xpuPackages.oneapi-bintools-unwrapped}/lib:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64:$MKLROOT/lib:$LD_LIBRARY_PATH
     '';
 
   # Use pytorch's custom configurations
@@ -579,13 +566,6 @@ buildPythonPackage rec {
       rocmPackages.setupRocmHook
     ]
     ++ lib.optionals xpuSupport [
-      stdenv.cc.libc
-      stdenv.cc.libc_dev
-      stdenv.cc
-      gcc.cc
-      torchXpuOpsSrc
-      xpuPackages.oneapi-torch-dev
-      xpuPackages.onednn-xpu
       xpuPackages.oneapi-bintools-unwrapped
     ];
 
@@ -634,16 +614,13 @@ buildPythonPackage rec {
         rocthrust-devel
       ]
     )
-    ++ lib.optionals xpuSupport
-    [ 
-      xpuPackages.oneapi-torch-dev
-      xpuPackages.oneapi-bintools-unwrapped
-      xpuPackages.onednn-xpu
-      torchXpuOpsSrc
-      gcc.cc.lib
-      gcc.cc
-      stdenv.cc.cc.libgcc
-    ]
+    ++ lib.optionals xpuSupport (
+      with xpuPackages;
+      [
+        oneapi-torch-dev
+        onednn-xpu
+      ]
+    )
     ++ lib.optionals (cudaSupport || rocmSupport) [ effectiveMagma ]
     ++ lib.optionals stdenv.hostPlatform.isLinux [ numactl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [

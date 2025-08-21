@@ -190,7 +190,7 @@ rec {
 
         torch_2_7 = callPackage ./pkgs/python-modules/torch_2_7 {xpuPackages=final.xpuPackages_2025_0;};
 
-        torch_2_8 = callPackage ./pkgs/python-modules/torch_2_8 { };
+        torch_2_8 = callPackage ./pkgs/python-modules/torch_2_8 {xpuPackages=final.xpuPackages_2025_1;};
 
         triton-rocm = callPackage ./pkgs/python-modules/triton-rocm { };
       }
