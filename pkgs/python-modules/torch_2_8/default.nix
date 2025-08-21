@@ -112,7 +112,6 @@
   xpuSupport ? (config.xpuSupport or false),
   xpuPackages,
   gpuTargets ? [ ],
-  gcc,
 }:
 
 let
