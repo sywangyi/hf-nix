@@ -7,6 +7,7 @@ final: prev: {
       lib,
       stdenv,
       rsync,
+      gcc,
     }:
     let
       # Build only the most essential Intel packages for PyTorch
@@ -20,9 +21,6 @@ final: prev: {
         final."intel-oneapi-compiler-shared-common-${dpcppVersion}"
         final."intel-oneapi-compiler-dpcpp-cpp-common-${dpcppVersion}"
         # MKL for math operations - most important for PyTorch
-        final."intel-oneapi-mkl-classic-include-${mklVersion}"
-        final."intel-oneapi-mkl-cluster-${mklVersion}"
-        final."intel-oneapi-mkl-cluster-devel-${mklVersion}"
         final."intel-oneapi-mkl-core-${mklVersion}"
         final."intel-oneapi-mkl-devel-${mklVersion}"
         final."intel-oneapi-mkl-core-devel-${mklVersion}"
@@ -52,11 +50,13 @@ final: prev: {
       ];
 
     in
+
     stdenv.mkDerivation {
       name = "oneapi-torch-dev-${dpcppVersion}";
-      nativeBuildInputs = [rsync];
-
-      buildCommand = ''
+      nativeBuildInputs = [rsync final.markForXpuRootHook];
+      dontUnpack = true;
+      dontStrip = true;
+      buildPhase = ''
         # Merge all top-level directories from every package into $out using rsync
         for pkg in ${lib.concatStringsSep " " essentialIntelPackages}; do
           for subdir in $(ls "$pkg"); do
@@ -66,19 +66,21 @@ final: prev: {
             fi
           done
         done
+      '';
+      installPhase = ''
 
         # Create 'latest' symlink in compiler,mkl,pti pointing to the current version
         chmod +w $out/oneapi/compiler
-        ln -sf $out/oneapi/compiler/${dpcppVersion} $out/oneapi/compiler/latest
+        ln -sf $out/oneapi/compiler/* $out/oneapi/compiler/latest
 
         chmod +w $out/oneapi/mkl
-        ln -sf $out/oneapi/mkl/${mklVersion} $out/oneapi/mkl/latest
+        ln -sf $out/oneapi/mkl/* $out/oneapi/mkl/latest
 
         chmod +w $out/oneapi/pti
-        ln -sf $out/oneapi/pti/${ptiVersion} $out/oneapi/pti/latest
+        ln -sf $out/oneapi/pti/* $out/oneapi/pti/latest
 
         chmod +w $out/oneapi/tbb
-        ln -sf $out/oneapi/tbb/${tbbVersion} $out/oneapi/tbb/latest
+        ln -sf $out/oneapi/tbb/* $out/oneapi/tbb/latest
 
         chmod +w $out/oneapi/vtune
         ln -sf $out/oneapi/vtune/* $out/oneapi/vtune/latest
@@ -97,8 +99,20 @@ final: prev: {
         if [ -f "$igc_dir/libigc.so" ] && [ ! -e "$igc_dir/libigc.so.1" ]; then
           ln -sf libigc.so "$igc_dir/libigc.so.1"
         fi
+        if [ ! -e "$out/oneapi/compiler/latest/include/CL"]; then
+            chmod +w $out/oneapi/compiler/latest/include
+            ln -sf $out/oneapi/compiler/latest/include/sycl/CL $out/oneapi/compiler/latest/include/CL
+        fi
 
+        mkdir -p $out/nix-support
+        echo 'export SYCL_ROOT="'$out'/oneapi/compiler/latest"' >> $out/nix-support/setup-hook
+        echo 'export Pti_DIR="'$out'/oneapi/pti/latest/lib/cmake/pti"' >> $out/nix-support/setup-hook
+        echo 'export MKLROOT="'$out'/oneapi/mkl/latest"' >> $out/nix-support/setup-hook
+        echo 'export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"' >> $out/nix-support/setup-hook
+        cat $out/nix-support/setup-hook
+        chmod 0444 $out/nix-support/setup-hook
       '';
+
       meta = with lib; {
         description = "Intel oneAPI development environment for PyTorch (copied files)";
         longDescription = ''

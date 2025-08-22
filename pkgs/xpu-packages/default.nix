@@ -31,6 +31,8 @@ let
 
   fixedPoint = final: { inherit callPackage lib packageMetadata; };
   composed = lib.composeManyExtensions [
+    # Hooks
+    (import ./hooks.nix)
     # Base package set.
     (import ./components.nix)
     # Packages that are joins of other packages.
@@ -39,14 +41,9 @@ let
     })
 
     (final: prev: {
-      oneapi-bintools-unwrapped = final.callPackage ./bintools-unwrapped.nix {
-        oneapi-torch-dev = final.oneapi-torch-dev;
-      };
-    })
-
-    (final: prev: {
       onednn-xpu = final.callPackage ./onednn-xpu.nix {
-        oneapi-bintools-unwrapped = final.oneapi-bintools-unwrapped;
+        setupXpuHook = final.setupXpuHook;
+        oneapi-torch-dev = final.oneapi-torch-dev;
         dpcppVersion = dpcppVersion;
       };
     })

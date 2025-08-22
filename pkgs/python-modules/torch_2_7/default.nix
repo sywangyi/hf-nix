@@ -437,8 +437,6 @@ buildPythonPackage rec {
     ''
     + lib.optionalString xpuSupport ''
       export TORCH_XPU_ARCH_LIST='pvc'
-      export PATH=$PATH:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64
-      export LD_LIBRARY_PATH=${xpuPackages.oneapi-bintools-unwrapped}/lib:${xpuPackages.oneapi-torch-dev}/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64:$MKLROOT/lib:$LD_LIBRARY_PATH
     '';
 
   # Use pytorch's custom configurations
@@ -565,7 +563,8 @@ buildPythonPackage rec {
       rocmPackages.setupRocmHook
     ]
     ++ lib.optionals xpuSupport [
-      xpuPackages.oneapi-bintools-unwrapped
+      xpuPackages.oneapi-torch-dev
+      xpuPackages.setupXpuHook
     ];
 
   buildInputs =
