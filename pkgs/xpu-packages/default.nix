@@ -47,7 +47,9 @@ let
         dpcppVersion = dpcppVersion;
       };
     })
-
+    (final: prev: {
+      ocloc = final.callPackage ./ocloc.nix {};
+    })
   ];
 in
 lib.makeScope newScope (lib.extends composed fixedPoint)

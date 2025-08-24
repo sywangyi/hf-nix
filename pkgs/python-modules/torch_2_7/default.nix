@@ -436,7 +436,7 @@ buildPythonPackage rec {
       python tools/amd_build/build_amd.py
     ''
     + lib.optionalString xpuSupport ''
-      export TORCH_XPU_ARCH_LIST='pvc'
+      export LD_LIBRARY_PATH=${xpuPackages.ocloc}/lib:$LD_LIBRARY_PATH
     '';
 
   # Use pytorch's custom configurations
@@ -565,6 +565,7 @@ buildPythonPackage rec {
     ++ lib.optionals xpuSupport [
       xpuPackages.oneapi-torch-dev
       xpuPackages.setupXpuHook
+      xpuPackages.ocloc
     ];
 
   buildInputs =

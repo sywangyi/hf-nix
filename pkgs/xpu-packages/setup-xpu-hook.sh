@@ -42,10 +42,6 @@ extendXpuHostPathsSeen() {
             export PATH="${PATH:-}:${line#XPU_MKL_BIN=}"
         elif [[ "$line" == XPU_MKL_INCLUDE=* ]]; then
             export CPATH="${line#XPU_MKL_INCLUDE=}:${CPATH:-}"
-        elif [[ "$line" == OCLOC_BIN=* ]]; then
-            export PATH="${line#OCLOC_BIN=}:${PATH:-}"
-        elif [[ "$line" == OCLOC_LIB=* ]]; then
-            export LD_LIBRARY_PATH="${line#OCLOC_LIB=}:${LD_LIBRARY_PATH:-}"
         fi
     done < "$markerPath"
 }

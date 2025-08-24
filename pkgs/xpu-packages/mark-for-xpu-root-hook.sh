@@ -36,11 +36,6 @@ markForXPU_ROOT() {
     if [[ -d "$prefix/oneapi/mkl/latest/include" ]]; then
         echo "XPU_MKL_INCLUDE=$prefix/oneapi/mkl/latest/include" >> "$markerPath"
     fi
-    if [[ -d "$prefix/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64" ]]; then
-        echo "OCLOC_BIN=$prefix/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64" >> "$markerPath"
-        echo "OCLOC_LIB=$prefix/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64" >> "$markerPath"
-    fi
-    ls "$markerPath"
 }
 
 fixupOutputHooks+=(markForXPU_ROOT)

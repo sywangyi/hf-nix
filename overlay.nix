@@ -223,9 +223,8 @@ rec {
     flattenVersion = prev.lib.strings.replaceStrings [ "." ] [ "_" ];
     readPackageMetadata = path: (builtins.fromJSON (builtins.readFile path));
     xpuVersions = [
-      "2025.0.1"
+      "2025.0.2"
       "2025.1.3"
-      "2025.2.0"
     ];
     newXpuPackages = final.callPackage ./pkgs/xpu-packages { };
   in

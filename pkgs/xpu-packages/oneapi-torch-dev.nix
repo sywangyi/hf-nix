@@ -46,7 +46,6 @@ final: prev: {
         # PTI (Profiling and Tracing Interface) - required for PyTorch compilation
         final."intel-pti-dev-${ptiVersion}"
         final."intel-pti-${ptiVersion}"
-        final."intel-oneapi-vtune"
       ];
 
     in
@@ -82,9 +81,6 @@ final: prev: {
         chmod +w $out/oneapi/tbb
         ln -sf $out/oneapi/tbb/* $out/oneapi/tbb/latest
 
-        chmod +w $out/oneapi/vtune
-        ln -sf $out/oneapi/vtune/* $out/oneapi/vtune/latest
-
         pti_lib_dir="$out/oneapi/pti/latest/lib"
         chmod +w $pti_lib_dir
         if [ ! -e "$pti_lib_dir/libpti_view.so" ]; then
@@ -94,11 +90,6 @@ final: prev: {
           fi
         fi
 
-        igc_dir="$out/oneapi/vtune/latest/bin64/gma/GTPin/Profilers/ocloc/Bin/intel64"
-        chmod +w $igc_dir
-        if [ -f "$igc_dir/libigc.so" ] && [ ! -e "$igc_dir/libigc.so.1" ]; then
-          ln -sf libigc.so "$igc_dir/libigc.so.1"
-        fi
         if [ ! -e "$out/oneapi/compiler/latest/include/CL"]; then
             chmod +w $out/oneapi/compiler/latest/include
             ln -sf $out/oneapi/compiler/latest/include/sycl/CL $out/oneapi/compiler/latest/include/CL
@@ -109,7 +100,7 @@ final: prev: {
         echo 'export Pti_DIR="'$out'/oneapi/pti/latest/lib/cmake/pti"' >> $out/nix-support/setup-hook
         echo 'export MKLROOT="'$out'/oneapi/mkl/latest"' >> $out/nix-support/setup-hook
         echo 'export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"' >> $out/nix-support/setup-hook
-        cat $out/nix-support/setup-hook
+        echo 'export USE_ONEMKL_XPU=0' >> $out/nix-support/setup-hook
         chmod 0444 $out/nix-support/setup-hook
       '';
 
