@@ -40,6 +40,8 @@ extendXpuHostPathsSeen() {
             export CPATH="${line#XPU_COMPILER_INCLUDE=}:${CPATH:-}"
         elif [[ "$line" == XPU_MKL_BIN=* ]]; then
             export PATH="${PATH:-}:${line#XPU_MKL_BIN=}"
+        elif [[ "$line" == XPU_MKL_LIB=* ]]; then
+            export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${line#XPU_MKL_LIB=}"
         elif [[ "$line" == XPU_MKL_INCLUDE=* ]]; then
             export CPATH="${line#XPU_MKL_INCLUDE=}:${CPATH:-}"
         fi

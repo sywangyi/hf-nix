@@ -396,6 +396,9 @@ buildPythonPackage rec {
     ''
 
     + lib.optionalString xpuSupport ''
+      # replace oneapi DIR
+      substituteInPlace cmake/Modules/FindMKL.cmake \
+        --replace-fail 'SET(DEFAULT_INTEL_ONEAPI_DIR "/opt/intel/oneapi")' 'SET(DEFAULT_INTEL_ONEAPI_DIR ${xpuPackages.oneapi-torch-dev}/oneapi)'
       # replace mkldnn build for xpu
       sed -i '/ExternalProject_Add(xpu_mkldnn_proj/,/^ *)/s/^/#/' cmake/Modules/FindMKLDNN.cmake
       substituteInPlace cmake/Modules/FindMKLDNN.cmake \
