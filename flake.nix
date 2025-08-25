@@ -84,6 +84,7 @@
                 flashinfer
                 hf-transfer
                 hf-xet
+                huggingface-hub
                 kernels
                 mamba-ssm
                 mktestdocs
@@ -96,6 +97,7 @@
                 quantization-eetq
                 rotary
                 torch
+                transformers
                 ;
             };
 

@@ -96,6 +96,8 @@ rec {
 
         hf-xet = callPackage ./pkgs/python-modules/hf-xet { };
 
+        huggingface-hub = callPackage ./pkgs/python-modules/huggingface-hub { };
+
         kernels = callPackage ./pkgs/python-modules/kernels { };
 
         marlin-kernels = callPackage ./pkgs/python-modules/marlin-kernels { };
@@ -191,6 +193,8 @@ rec {
         torch_2_7 = callPackage ./pkgs/python-modules/torch_2_7 { };
 
         torch_2_8 = callPackage ./pkgs/python-modules/torch_2_8 { };
+
+        transformers = callPackage ./pkgs/python-modules/transformers { };
 
         triton-rocm = callPackage ./pkgs/python-modules/triton-rocm { };
       }
