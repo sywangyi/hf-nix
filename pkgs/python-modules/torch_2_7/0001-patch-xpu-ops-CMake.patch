@@ -1,28 +1,15 @@
-From 3b5dd2c142173a9a6afe6b21a3107e04d7fcc0ea Mon Sep 17 00:00:00 2001
+From 356fd17a8dee9788657e306a96392c0e0b11c3e6 Mon Sep 17 00:00:00 2001
 From: "Wang, Yi A" <yi.a.wang@intel.com>
-Date: Mon, 25 Aug 2025 17:39:38 -0700
+Date: Tue, 26 Aug 2025 08:20:01 +0000
 Subject: [PATCH] patch xpu ops CMake
 
 Signed-off-by: Wang, Yi A <yi.a.wang@intel.com>
 ---
- cmake/BuildFlags.cmake       | 1 +
  cmake/Modules/FindSYCL.cmake | 6 +++++-
- 2 files changed, 6 insertions(+), 1 deletion(-)
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/cmake/BuildFlags.cmake b/cmake/BuildFlags.cmake
-index ec9aaccb..8f4740df 100644
---- a/cmake/BuildFlags.cmake
-+++ b/cmake/BuildFlags.cmake
-@@ -83,6 +83,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
-     set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -fno-approx-func)
-     set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -Wno-absolute-value)
-     set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -no-ftz)
-+    set(SYCL_KERNEL_OPTIONS ${SYCL_KERNEL_OPTIONS} -D_GLIBCXX_USE_CXX11_ABI=1)
-   endif()
- 
-   if(CMAKE_BUILD_TYPE MATCHES Debug)
 diff --git a/cmake/Modules/FindSYCL.cmake b/cmake/Modules/FindSYCL.cmake
-index 86457ba3..0feec0fa 100644
+index 9a5cd844..b4d46e4b 100644
 --- a/cmake/Modules/FindSYCL.cmake
 +++ b/cmake/Modules/FindSYCL.cmake
 @@ -34,7 +34,8 @@
@@ -46,5 +33,5 @@ index 86457ba3..0feec0fa 100644
  
    set(SYCL_compile_definitions "$<TARGET_PROPERTY:${sycl_target},COMPILE_DEFINITIONS>")
 -- 
-2.43.0
+2.43.7
 

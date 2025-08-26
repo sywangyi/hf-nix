@@ -101,6 +101,7 @@ final: prev: {
         echo 'export Pti_DIR="'$out'/oneapi/pti/latest/lib/cmake/pti"' >> $out/nix-support/setup-hook
         echo 'export MKLROOT="'$out'/oneapi/mkl/latest"' >> $out/nix-support/setup-hook
         echo 'export SYCL_EXTRA_INCLUDE_DIRS="${gcc.cc}/include/c++/${gcc.version} ${stdenv.cc.libc_dev}/include ${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu"' >> $out/nix-support/setup-hook
+        echo 'export CMAKE_CXX_FLAGS="-I${gcc.cc}/include/c++/${gcc.version} -I${stdenv.cc.libc_dev}/include -I${gcc.cc}/include/c++/${gcc.version}/x86_64-unknown-linux-gnu -B${stdenv.cc.libc}/lib -B'$out'/oneapi/compiler/latest/lib/crt -L${stdenv.cc}/lib -L${stdenv.cc}/lib64 -L${gcc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${gcc.version} -L${stdenv.cc.cc.lib}/lib"' >> $out/nix-support/setup-hook
         chmod 0444 $out/nix-support/setup-hook
       '';
 

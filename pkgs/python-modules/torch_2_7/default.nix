@@ -338,7 +338,7 @@ buildPythonPackage rec {
 
   postUnpack = lib.optionalString xpuSupport ''
     cp -r --no-preserve=mode ${torchXpuOpsSrc} $sourceRoot/third_party/torch-xpu-ops
-    patch -d $sourceRoot/third_party/torch-xpu-ops -p1 < ${./0001-patch-xpu-ops-Cmake.patch}
+    patch -d $sourceRoot/third_party/torch-xpu-ops -p1 < ${./0001-patch-xpu-ops-CMake.patch}
   '';
 
   postPatch =
