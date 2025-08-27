@@ -7,6 +7,8 @@ rec {
 
   build2cmake = final.callPackage ./pkgs/build2cmake { };
 
+  cudaPackages = prev.cudaPackages_12_9;
+
   fetchKernel = final.callPackage ./pkgs/fetch-kernel { };
 
   # Used by ROCm.
@@ -37,14 +39,12 @@ rec {
   # Remove when we remove ROCm 6.2.
   suitesparse_4_4 = prev.suitesparse_4_4.overrideAttrs (
     _: prevAttrs: {
-      postInstall =
-        prevAttrs.postInstall
-        + ''
-          ln -s $out/lib/libsuitesparse.so $out/lib/libsuitesparse.so.4
-          # All dynamic libraries are just symplinks to the main library.
-          ln -s $out/lib/libsuitesparse.so $out/lib/libcholmod.so.3
-          ln -s $out/lib/libsuitesparse.so $out/lib/libsuitesparseconfig.so.4
-        '';
+      postInstall = prevAttrs.postInstall + ''
+        ln -s $out/lib/libsuitesparse.so $out/lib/libsuitesparse.so.4
+        # All dynamic libraries are just symplinks to the main library.
+        ln -s $out/lib/libsuitesparse.so $out/lib/libcholmod.so.3
+        ln -s $out/lib/libsuitesparse.so $out/lib/libsuitesparseconfig.so.4
+      '';
     }
   );
 
@@ -95,6 +95,8 @@ rec {
         hf-transfer = callPackage ./pkgs/python-modules/hf-transfer { };
 
         hf-xet = callPackage ./pkgs/python-modules/hf-xet { };
+
+        huggingface-hub = callPackage ./pkgs/python-modules/huggingface-hub { };
 
         kernels = callPackage ./pkgs/python-modules/kernels { };
 
@@ -184,13 +186,15 @@ rec {
           }
         );
 
-        torch = python-self.torch_2_7;
+        torch = python-self.torch_2_8;
 
         torch_2_6 = callPackage ./pkgs/python-modules/torch_2_6 { };
 
         torch_2_7 = callPackage ./pkgs/python-modules/torch_2_7 {xpuPackages=final.xpuPackages_2025_0;};
 
         torch_2_8 = callPackage ./pkgs/python-modules/torch_2_8 {xpuPackages=final.xpuPackages_2025_1;};
+
+        transformers = callPackage ./pkgs/python-modules/transformers { };
 
         triton-rocm = callPackage ./pkgs/python-modules/triton-rocm { };
       }
