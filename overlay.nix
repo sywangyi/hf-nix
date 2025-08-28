@@ -1,4 +1,7 @@
 final: prev:
+let
+  gccVersions = final.callPackage ./pkgs/gcc/all.nix { noSysDirs = true; };
+in
 rec {
   # Use MKL for BLAS/LAPACK on x86_64.
   blas = if final.stdenv.isx86_64 then prev.blas.override { blasProvider = prev.mkl; } else prev.blas;
@@ -7,9 +10,30 @@ rec {
 
   build2cmake = final.callPackage ./pkgs/build2cmake { };
 
-  cudaPackages = prev.cudaPackages_12_9;
+  # Top-level fix-point used in `cudaPackages`' internals
+  _cuda = import ./pkgs/cuda-packages/_cuda { inherit (final) lib; };
+
+  cudaPackages_11_8 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "11.8"; };
+  cudaPackages_11 = final.lib.recurseIntoAttrs cudaPackages_11_8;
+
+  cudaPackages_12_0 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.0"; };
+  cudaPackages_12_1 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.1"; };
+  cudaPackages_12_2 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.2"; };
+  cudaPackages_12_3 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.3"; };
+  cudaPackages_12_4 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.4"; };
+  cudaPackages_12_5 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.5"; };
+  cudaPackages_12_6 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.6"; };
+  cudaPackages_12_8 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.8"; };
+  cudaPackages_12_9 = final.callPackage ./pkgs/cuda-packages { cudaMajorMinorVersion = "12.9"; };
+  cudaPackages_12 = cudaPackages_12_9;
+
+  cudaPackages = final.lib.recurseIntoAttrs cudaPackages_12;
 
   fetchKernel = final.callPackage ./pkgs/fetch-kernel { };
+
+  # These gcc versions are not in nixpkgs anymore, but we need them for older CUDA versions.
+  gcc11Stdenv = final.overrideCC final.gccStdenv gccVersions.gcc11;
+  gcc12Stdenv = final.overrideCC final.gccStdenv gccVersions.gcc12;
 
   # Used by ROCm.
   libffi_3_2 = final.libffi_3_3.overrideAttrs (
@@ -187,8 +211,6 @@ rec {
         );
 
         torch = python-self.torch_2_8;
-
-        torch_2_6 = callPackage ./pkgs/python-modules/torch_2_6 { };
 
         torch_2_7 = callPackage ./pkgs/python-modules/torch_2_7 {xpuPackages=final.xpuPackages_2025_0;};
 
