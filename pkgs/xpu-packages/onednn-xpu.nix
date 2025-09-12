@@ -7,11 +7,10 @@
   gcc,
   setupXpuHook,
   oneapi-torch-dev,
-  intel-oneapi-dpcpp-cpp,
 }:
 
 let
-  dpcppVersion = intel-oneapi-dpcpp-cpp.version;
+  dpcppVersion = oneapi-torch-dev.version;
   oneDnnVersions = {
     "2025.0" = {
       version = "3.7.1";

@@ -5,16 +5,14 @@
   cmake,
   ninja,
   gcc,
-  writeShellScriptBin,
   setupXpuHook,
   oneapi-torch-dev,
   python3,
   ocloc,
-  intel-oneapi-dpcpp-cpp,
 }:
 
 let
-  dpcppVersion = intel-oneapi-dpcpp-cpp.version;
+  dpcppVersion = oneapi-torch-dev.version;
   cutlassVersions = {
     "2025.0" = {
       version = "3.9-0.2";

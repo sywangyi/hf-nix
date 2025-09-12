@@ -23,20 +23,13 @@ let
     })
 
     (final: prev: {
-      onednn-xpu = final.callPackage ./onednn-xpu.nix {
-        setupXpuHook = final.setupXpuHook;
-        oneapi-torch-dev = final.oneapi-torch-dev;
-      };
+      onednn-xpu = final.callPackage ./onednn-xpu.nix { };
     })
     (final: prev: {
       ocloc = final.callPackage ./ocloc.nix { };
     })
     (final: prev: {
-      cutlass_sycl = final.callPackage ./cutlass-sycl.nix {
-        setupXpuHook = final.setupXpuHook;
-        oneapi-torch-dev = final.oneapi-torch-dev;
-        ocloc = final.ocloc;
-      };
+      cutlass_sycl = final.callPackage ./cutlass-sycl.nix { };
     })
   ];
 in
