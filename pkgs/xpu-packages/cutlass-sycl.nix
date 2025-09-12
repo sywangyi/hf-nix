@@ -4,7 +4,6 @@
   fetchFromGitHub,
   cmake,
   ninja,
-  gcc,
   setupXpuHook,
   oneapi-torch-dev,
   python3,
