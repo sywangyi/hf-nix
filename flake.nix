@@ -110,7 +110,12 @@
 
             xpu = {
               python3Packages = with pkgsXpu.python3.pkgs; {
-                inherit torch torch_2_7 torch_2_8;
+                inherit
+                  torch
+                  torch_2_7
+                  torch_2_8
+                  torch_2_9
+                  ;
               };
             };
 

@@ -20,6 +20,10 @@ let
       version = "3.8.1";
       hash = "sha256-x4leRd0xPFUygjAv/D125CIXn7lYSyzUKsd9IDh/vCc=";
     };
+    "2025.2" = {
+      version = "3.9.1";
+      hash = "sha256-DbLW22LgG8wrBNMsxoUGlacHLcfIBwqyiv+HOmFDtxc=";
+    };
   };
   oneDnnVersion =
     oneDnnVersions.${lib.versions.majorMinor dpcppVersion}
@@ -55,7 +59,7 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   postInstall = ''
-    if [ "${finalAttrs.version}" = "3.8.1" ]; then
+    if [ "${finalAttrs.version}" != "3.7.1" ]; then
       cp -rn "$src/third_party/level_zero" "$out/include/"
     else
       cp -rn "$src/src/gpu/intel/sycl/l0/level_zero" "$out/include/"

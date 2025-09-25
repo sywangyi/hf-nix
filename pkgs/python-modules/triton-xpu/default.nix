@@ -56,16 +56,43 @@ let
         hash = "sha256-/KfUxWDczLQ/0DOiFC4Z66o+gtoF/7vgvAvKyv9Z9OA=";
       };
     };
+    "2.9" = {
+      llvm = {
+        rev = "570885128351868c1308bb22e8ca351d318bc4a1";
+        hash = "sha256-zRiE+2u8WxZmee0q1Je7Gch+w/LT+nw/4DV18ZB1sM4=";
+      };
+      triton = {
+        rev = "1b0418a9a454b2b93ab8d71f40e59d2297157fae";
+        hash = "sha256-MEpkUl1sFEwT4KPH9nSb+9/CmhM6qbG40EAiZmY4mdU=";
+      };
+      spirv_llm = {
+        rev = "9413a66e04ba34f429b05efe00adff0c1f1e0a58";
+        hash = "sha256-sVHIQ6z/G0ZiuUoNEfSeOvC+rD+gd7rmdO+BBCXyCJk=";
+      };
+      spirv_headers = {
+        rev = "9e3836d7d6023843a72ecd3fbf3f09b1b6747a9e";
+        hash = "sha256-N8NBAkkpOcbgap4loPJJW6E5bjG+TixCh/HN259RyjI=";
+      };
+    };
   };
   tritonVersions =
     torchTritonVersions.${torchVersion} or (throw "Unsupported Torch version: ${torchVersion}");
 
-  llvmBase = triton-llvm.override {
-    llvmTargetsToBuild = [
-      "X86"
-      "SPIRV"
-    ];
-  };
+  llvmBase = triton-llvm.override (
+    {
+      llvmTargetsToBuild = [
+        "X86"
+        "SPIRV"
+      ];
+    }
+    // lib.optionalAttrs (torchVersion == "2.9") {
+      llvmProjectsToBuild = [
+        "mlir"
+        "llvm"
+        "lld"
+      ];
+    }
+  );
   llvm = llvmBase.overrideAttrs (old: {
     src = fetchFromGitHub {
       inherit (tritonVersions.llvm) rev hash;
@@ -106,6 +133,10 @@ buildPythonPackage rec {
 
   postPatch = ''
     chmod -R u+w $NIX_BUILD_TOP/source
+    ${lib.optionalString (torchVersion == "2.9") ''
+      sed -i 's/-Werror//g' $NIX_BUILD_TOP/source/CMakeLists.txt
+      sed -i 's/ninja==1.11.1.4/ninja>=1.11.1/' $NIX_BUILD_TOP/source/pyproject.toml
+    ''}
     sed -i '/if (NOT SPIRVToLLVMTranslator_FOUND)/,/endif (NOT SPIRVToLLVMTranslator_FOUND)/c\
       set(SPIRVToLLVMTranslator_SOURCE_DIR "${spirvLlvmTranslatorSrc}")\n\
       set(SPIRVToLLVMTranslator_BINARY_DIR \''${CMAKE_CURRENT_BINARY_DIR}/SPIRVToLLVMTranslator-build)\n\

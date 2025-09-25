@@ -21,6 +21,11 @@ let
       version = "3.9-0.3";
       hash = "sha256-FLmTseMw31txptQkvWaN03xoaLzIbQz2Ip1xtCKH3ZE=";
     };
+    "2025.2" = {
+      #TODO, need to update once new tag is released
+      version = "3.9-0.3";
+      hash = "sha256-FLmTseMw31txptQkvWaN03xoaLzIbQz2Ip1xtCKH3ZE=";
+    };
   };
   cutlassVersion =
     cutlassVersions.${lib.versions.majorMinor dpcppVersion}

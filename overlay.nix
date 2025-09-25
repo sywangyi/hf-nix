@@ -214,7 +214,7 @@ rec {
 
         torch_2_8 = callPackage ./pkgs/python-modules/torch_2_8 { xpuPackages = final.xpuPackages_2025_1; };
 
-        torch_2_9 = callPackage ./pkgs/python-modules/torch_2_9 { xpuPackages = final.xpuPackages_2025_1; };
+        torch_2_9 = callPackage ./pkgs/python-modules/torch_2_9 { xpuPackages = final.xpuPackages_2025_2; };
 
         transformers = callPackage ./pkgs/python-modules/transformers { };
 
@@ -228,6 +228,11 @@ rec {
         triton-xpu_2_8 = callPackage ./pkgs/python-modules/triton-xpu {
           torchVersion = "2.8";
           xpuPackages = final.xpuPackages_2025_1;
+        };
+
+        triton-xpu_2_9 = callPackage ./pkgs/python-modules/triton-xpu {
+          torchVersion = "2.9";
+          xpuPackages = final.xpuPackages_2025_2;
         };
       }
     )
@@ -263,6 +268,7 @@ rec {
     xpuVersions = [
       "2025.0.2"
       "2025.1.3"
+      "2025.2.1"
     ];
     newXpuPackages = final.callPackage ./pkgs/xpu-packages { };
   in

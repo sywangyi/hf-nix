@@ -88,7 +88,7 @@
     else if rocmSupport then
       python.pkgs.triton-rocm
     else if xpuSupport then
-      python.pkgs.triton-xpu_2_8
+      python.pkgs.triton-xpu_2_9
     else
       triton,
   triton-cuda,
@@ -303,8 +303,8 @@ let
       fetchFromGitHub {
         owner = "intel";
         repo = "torch-xpu-ops";
-        rev = "3a9419c8bb6a98dd3e3cd473c36691fb4abeae40";
-        hash = "sha256-cNNnqJXfFO7UOJtXmDGKS2s1Jjs0+/AztPMjE3K/YG0=";
+        rev = "f8408a642da568051ab82e20f2947b89e491fbeb";
+        hash = "sha256-eoT8mvaPw1NFFTYFVT6NUqOFOo4rDdNrIseF+FDpXUk=";
       }
     else
       null;
